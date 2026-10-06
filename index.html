@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>🌲 Aventura na Floresta 3D — Pitfall</title>
+  <title>🌲 Aventura na Floresta 3D Hiper-Realista — Pitfall</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #07130c; color: #f0fdf4;
+      background: #050d08; color: #f0fdf4;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; padding: 12px;
     }
@@ -16,42 +16,53 @@
     p.sub { margin: 0 0 10px; color: #bbf7d0; text-align: center; }
     #hud {
       display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
-      background: #14532d; padding: 10px; border-radius: 12px;
+      background: #0f2e1c; padding: 10px; border-radius: 12px;
       margin-bottom: 8px; width: min(960px, 96vw);
+      border: 1px solid #22c55e33;
     }
     .badge {
       background: #052e16; border: 1px solid #22c55e; border-radius: 999px;
       padding: 4px 12px; font-size: 0.9rem; white-space: nowrap;
     }
     #msg { min-height: 1.6em; font-weight: 700; text-align: center; margin: 4px 0; }
-    /* Palco 16:9 */
     #stage {
       position: relative;
       width: min(960px, 96vw);
       aspect-ratio: 16 / 9;
       border-radius: 14px; overflow: hidden;
-      border: 3px solid #22c55e; background: #000;
+      border: 3px solid #1f4d2e; background: #000;
+      box-shadow: 0 18px 60px rgba(0,0,0,.6), inset 0 0 120px rgba(0,0,0,.35);
     }
     #stage canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+    #vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,.42) 100%),
+        linear-gradient(to top, rgba(0,0,0,.28), transparent 22%);
+    }
+    #cinema { position:absolute; top:10px; left:12px; pointer-events:none;
+      font-size:.75rem; letter-spacing:.14em; color:#fff8; background:#0007;
+      padding:4px 10px; border-radius:999px; border:1px solid #fff2; }
     .overlay {
       position: absolute; inset: 0; display: none;
-      background: rgba(0,0,0,0.72);
+      background: rgba(2,8,4,0.74); backdrop-filter: blur(3px);
       flex-direction: column; align-items: center; justify-content: center;
       text-align: center; padding: 16px; gap: 10px;
     }
     .overlay.show { display: flex; }
     .overlay h2 { margin: 0; font-size: 1.3rem; }
-    .overlay p { margin: 0; color: #d1fae5; }
+    .overlay p { margin: 0; color: #d1fae5; max-width: 560px; }
     .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     button {
-      background: #22c55e; color: #052e16; border: 0; border-radius: 10px;
+      background: linear-gradient(180deg,#4ade80,#16a34a); color: #052e16; border: 0; border-radius: 10px;
       padding: 10px 14px; font-size: 1rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(34,197,94,.35);
     }
-    button.secondary { background: #334155; color: white; }
+    button.secondary { background: #334155; color: white; box-shadow:none; }
     button.big { font-size: 1.05rem; padding: 12px 16px; }
     #controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
     #legend {
-      width: min(960px, 96vw); background: #14532d; border-radius: 12px;
+      width: min(960px, 96vw); background: #0f2e1c; border-radius: 12px;
       padding: 10px 14px; margin-top: 10px; font-size: 0.92rem; color: #e2e8f0;
     }
     footer { margin: 10px 0 20px; color: #86efac; font-size: 0.85rem; text-align: center; }
@@ -60,8 +71,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
 <body>
-  <h1>🌲 Aventura na Floresta 3D 🐊</h1>
-  <p class="sub">Terceira pessoa 16:9 • inspirado em Pitfall! Corra, pule e escolha seu caminho.</p>
+  <h1>🌲 Aventura na Floresta 3D Hiper-Realista 🐊</h1>
+  <p class="sub">Terceira pessoa 16:9 • Three.js realista • inspirado em Pitfall!</p>
 
   <div id="hud">
     <div class="badge">⭐ Pontos: <span id="score">0</span></div>
@@ -71,32 +82,30 @@
     <div class="badge">🏆 Recorde: <span id="best">0</span></div>
   </div>
 
-  <div id="msg">Carregando floresta 3D...</div>
+  <div id="msg">Carregando floresta hiper-realista...</div>
 
   <div id="stage">
+    <div id="vignette"></div>
+    <div id="cinema">● 16:9 • 3RD PERSON • THREE.JS • ULTRA</div>
     <div id="start" class="overlay show">
-      <h2>🌲 Bem-vindo à Floresta!</h2>
-      <p>Estilo Pitfall! Desvie de <b>🪵 árvores caídas</b> e <b>🕳️ buracos com jacarés</b>.<br>
-      Na <b>bifurcação</b> escolha entre 2 caminhos diferentes!<br>
+      <h2>🌲 Floresta Hiper-Realista</h2>
+      <p>Estilo Pitfall! com gráficos realistas: sol com sombras, neblina, folhas caindo, poeira, água e jacaré animado.<br>
+      Desvie de <b>🪵 árvores caídas</b> e <b>🕳️ buracos</b>. Na <b>bifurcação</b> escolha 1 dos 2 caminhos!<br>
       ← → trocam de trilha • ↑ / Espaço pula</p>
-      <div class="row">
-        <button id="btn-start" class="big">▶️ Começar aventura</button>
-      </div>
+      <div class="row"><button id="btn-start" class="big">▶️ Entrar na floresta</button></div>
     </div>
     <div id="choice" class="overlay">
       <h2>⚠️ Bifurcação! Escolha seu caminho:</h2>
-      <p>Dois caminhos diferentes na floresta...</p>
+      <p>Dois caminhos diferentes...</p>
       <div class="row">
-        <button id="btn-flores" class="big">🌸 Caminho das Flores<br><small>fácil • ponto x1</small></button>
-        <button id="btn-sombrio" class="big" style="background:#a855f7;color:white">🌑 Caminho Sombrio<br><small>difícil • ponto x2</small></button>
+        <button id="btn-flores" class="big">🌸 Caminho das Flores<br><small>fácil • ponto x1 • dia claro</small></button>
+        <button id="btn-sombrio" class="big" style="background:linear-gradient(180deg,#a78bfa,#6d28d9);color:white">🌑 Caminho Sombrio<br><small>difícil • ponto x2 • neblina + vaga-lumes</small></button>
       </div>
     </div>
     <div id="over" class="overlay">
       <h2>💀 Fim de jogo!</h2>
       <p id="over-text">Pontos: 0</p>
-      <div class="row">
-        <button id="btn-again" class="big">🔄 Jogar de novo</button>
-      </div>
+      <div class="row"><button id="btn-again" class="big">🔄 Jogar de novo</button></div>
     </div>
   </div>
 
@@ -109,12 +118,9 @@
   </div>
 
   <div id="legend">
-    <div><b>Como jogar (terceira pessoa):</b> você corre para dentro da floresta. Use <b>← →</b> (ou A/D, ou arrastar) para trocar de trilha, <b>↑ / Espaço / W</b> (ou botão PULAR) para pular.</div>
-    <div style="margin-top:6px"><b>Obstáculos (Pitfall!):</b></div>
-    <div>🪵 <b>Árvore caída</b> — tronco atravessado na trilha, pule por cima!</div>
-    <div>🕳️ <b>Buraco com jacaré</b> — poço na trilha, pule ou desvie de trilha!</div>
-    <div>💰 <b>Tesouro Pitfall</b> — ouro e diamantes dão pontos extras.</div>
-    <div style="margin-top:6px"><b>Dois caminhos:</b> 🌸 Flores (fácil) x 🌑 Sombrio (rápido, mais obstáculos, pontos dobrados). Biblioteca 3D: Three.js.</div>
+    <div><b>Terceira pessoa hiper-realista:</b> câmera atrás do explorador, sombras em tempo real, texturas procedurais (grama, terra, casca), céu com sol e nuvens, montanhas ao fundo, folhas e poeira.</div>
+    <div style="margin-top:6px"><b>Pitfall!:</b> 🪵 tronco com musgo • 🕳️ poço com água e jacaré animado • 💰 baú com ouro e gema.</div>
+    <div><b>Dois caminhos:</b> 🌸 Flores (dia) x 🌑 Sombrio (noite/neblina, vaga-lumes, x2 pontos). Biblioteca 3D: Three.js.</div>
   </div>
 
   <footer>
@@ -126,381 +132,494 @@
 (() => {
   const el = id => document.getElementById(id);
   const msg = t => { el("msg").textContent = t; };
+  if (typeof THREE === "undefined") { msg("❌ Three.js não carregou. Verifique a internet e recarregue."); return; }
+  const R = (a,b) => a + Math.random()*(b-a);
 
-  if (typeof THREE === "undefined") {
-    msg("❌ Não foi possível carregar a biblioteca 3D (Three.js). Verifique sua internet e recarregue.");
-    return;
-  }
-
-  // ---------- Config 16:9 ----------
-  const VW = 1280, VH = 720; // 16:9
+  // ---------- Renderer cinematográfico ----------
+  const VW = 1280, VH = 720;
   const stage = el("stage");
-
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87ceeb);
-  scene.fog = new THREE.Fog(0x87ceeb, 25, 85);
+  scene.background = new THREE.Color(0x9fcdf0);
+  scene.fog = new THREE.FogExp2(0xbcd9a8, 0.012);
 
-  const camera = new THREE.PerspectiveCamera(60, VW / VH, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(62, VW/VH, 0.1, 300);
+  camera.position.set(0, 3.0, 6.2);
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(VW, VH, false);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
   stage.insertBefore(renderer.domElement, stage.firstChild);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x1a4d2e, 0.95));
-  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-  sun.position.set(6, 12, 6);
+  // ---------- Luz realista ----------
+  scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x2a4d2e, 0.85));
+  const sun = new THREE.DirectionalLight(0xfff2d8, 1.35);
+  sun.position.set(10, 18, 8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -18; sun.shadow.camera.right = 18;
+  sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -60;
+  sun.shadow.camera.far = 80; sun.shadow.bias = -0.0006;
   scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x9fc3ff, 0.25);
+  fill.position.set(-6, 6, 10); scene.add(fill);
 
-  // ---------- Mundo ----------
-  const LANES = [-2.3, 0, 2.3];
-  const THEMES = {
-    flores:  { sky: 0x87ceeb, fog: 0x9fd8a8, ground: 0x3f9e4d, trail: 0x8a6a3b, tree: 0x1f7a33, mult: 1, label: "Flores 🌸" },
-    sombrio: { sky: 0x1a1033, fog: 0x2a1a4d, ground: 0x2b2b33, trail: 0x4a3b2a, tree: 0x14351f, mult: 2, label: "Sombrio 🌑 x2" }
-  };
+  // ---------- Texturas procedurais ----------
+  function canvasTex(size, fn, rx=1, ry=1) {
+    const c = document.createElement("canvas"); c.width = c.height = size;
+    fn(c.getContext("2d"), size);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+    return t;
+  }
+  const grassTex = canvasTex(512, (g,s) => {
+    g.fillStyle = "#3e8a3c"; g.fillRect(0,0,s,s);
+    for (let i=0;i<9000;i++){ g.fillStyle = `rgba(${20+Math.random()*60|0},${90+Math.random()*90|0},${20+Math.random()*50|0},.55)`; g.fillRect(Math.random()*s,Math.random()*s,2,2+R(0,5)); }
+    for (let i=0;i<500;i++){ g.strokeStyle = "rgba(20,60,20,.5)"; g.beginPath(); const x=Math.random()*s,y=Math.random()*s; g.moveTo(x,y); g.lineTo(x+R(-3,3),y-R(4,9)); g.stroke(); }
+  }, 10, 30);
+  const dirtTex = canvasTex(512, (g,s) => {
+    g.fillStyle = "#7a5a36"; g.fillRect(0,0,s,s);
+    for (let i=0;i<5000;i++){ g.fillStyle = `rgba(${90+Math.random()*70|0},${60+Math.random()*50|0},${30+Math.random()*30|0},.6)`; const r=R(1,3); g.beginPath(); g.arc(Math.random()*s,Math.random()*s,r,0,7); g.fill(); }
+    for (let i=0;i<40;i++){ g.fillStyle="rgba(60,40,20,.5)"; g.beginPath(); g.ellipse(Math.random()*s,Math.random()*s,R(8,26),R(5,12),Math.random()*3,0,7); g.fill(); }
+  }, 2, 30);
+  const barkTex = canvasTex(256, (g,s) => {
+    g.fillStyle = "#5d4126"; g.fillRect(0,0,s,s);
+    for (let i=0;i<90;i++){ g.fillStyle = `rgba(${30+Math.random()*40|0},${20+Math.random()*30|0},10,.7)`; const x=Math.random()*s; g.fillRect(x,0,R(2,9),s); }
+    for (let i=0;i<300;i++){ g.fillStyle="rgba(120,90,55,.4)"; g.fillRect(Math.random()*s,Math.random()*s,R(1,4),R(4,14)); }
+  }, 2, 2);
+  const ringTex = canvasTex(256, (g,s) => {
+    g.fillStyle = "#c9a06a"; g.fillRect(0,0,s,s);
+    for (let r=10;r<s/2;r+=7){ g.strokeStyle="rgba(120,75,30,.8)"; g.lineWidth=2; g.beginPath(); g.arc(s/2,s/2,r,0,7); g.stroke(); }
+  });
+  const softTex = (() => {
+    const c=document.createElement("canvas"); c.width=c.height=64;
+    const g=c.getContext("2d"); const gr=g.createRadialGradient(32,32,2,32,32,30);
+    gr.addColorStop(0,"rgba(255,255,255,1)"); gr.addColorStop(1,"rgba(255,255,255,0)");
+    g.fillStyle=gr; g.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  })();
 
-  const groundMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.ground });
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(36, 220), groundMat);
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.set(0, 0, -80);
-  scene.add(ground);
+  // ---------- Céu, sol, nuvens, montanhas ----------
+  const skyDome = new THREE.Mesh(
+    new THREE.SphereGeometry(220, 16, 12),
+    new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite:false, fog:false,
+      uniforms: { top:{value:new THREE.Color(0x3d7ac8)}, mid:{value:new THREE.Color(0x9fcdf0)}, bot:{value:new THREE.Color(0xe8f3d8)} },
+      vertexShader: "varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+      fragmentShader: "varying vec3 vP; uniform vec3 top,mid,bot; void main(){ float h=normalize(vP).y; vec3 c=h>0.12?mix(mid,top,smoothstep(.12,.7,h)):mix(bot,mid,smoothstep(-.08,.12,h)); gl_FragColor=vec4(c,1.);}"
+    })
+  );
+  scene.add(skyDome);
+  const sunSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, color: 0xfff6c8, transparent:true, opacity:.95, fog:false, depthWrite:false }));
+  sunSpr.scale.set(34,34,1); sunSpr.position.set(46,52,-160); scene.add(sunSpr);
+  const sunCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, color: 0xffffff, transparent:true, fog:false, depthWrite:false }));
+  sunCore.scale.set(13,13,1); sunCore.position.copy(sunSpr.position); scene.add(sunCore);
 
-  const trailMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.trail });
-  const trail = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 220), trailMat);
-  trail.rotation.x = -Math.PI / 2;
-  trail.position.set(0, 0.01, -80);
-  scene.add(trail);
+  const clouds = [];
+  for (let i=0;i<9;i++){
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, color:0xffffff, transparent:true, opacity:R(.5,.85), fog:false, depthWrite:false }));
+    m.scale.set(R(28,60), R(9,16), 1);
+    m.position.set(R(-140,140), R(38,75), R(-180,-90));
+    m.userData.v = R(.3,1.1); scene.add(m); clouds.push(m);
+  }
+  const mtnMat = new THREE.MeshBasicMaterial({ color: 0x5a7d8c, fog: true });
+  const mtnMat2 = new THREE.MeshBasicMaterial({ color: 0x3d5a52, fog: true });
+  [[-95,-175,46,26],[ -40,-185,60,34],[30,-188,55,30],[95,-178,48,24]].forEach(([x,z,w,h],i)=>{
+    const m = new THREE.Mesh(new THREE.ConeGeometry(w/2, h, 5), i%2?mtnMat2:mtnMat);
+    m.position.set(x, h/2-2, z); scene.add(m);
+  });
 
-  // Árvores laterais (floresta)
-  const trees = [];
-  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x6b4423 });
-  const leafMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.tree });
-  function makeTree(x, z, s) {
+  // ---------- Chão realista ----------
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(70, 260),
+    new THREE.MeshStandardMaterial({ map: grassTex, roughness: 1, metalness: 0 }));
+  ground.rotation.x = -Math.PI/2; ground.position.set(0,0,-90); ground.receiveShadow = true; scene.add(ground);
+
+  const trail = new THREE.Mesh(new THREE.PlaneGeometry(8.6, 260),
+    new THREE.MeshStandardMaterial({ map: dirtTex, roughness: 1 }));
+  trail.rotation.x = -Math.PI/2; trail.position.set(0,0.02,-90); trail.receiveShadow = true; scene.add(trail);
+
+  // pedras na borda da trilha
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8a8f96, roughness: .95, flatShading: true });
+  const edgeStones = [];
+  for (let i=0;i<40;i++){
+    const st = new THREE.Mesh(new THREE.DodecahedronGeometry(R(.12,.3),0), stoneMat);
+    st.position.set((Math.random()<.5?-1:1)*R(4.4,5.2), .1, R(-110,12));
+    st.rotation.set(Math.random()*3,Math.random()*3,0); st.castShadow = true; scene.add(st); edgeStones.push(st);
+  }
+
+  // moitas, grama, flores, cogumelos
+  const leafMats = [0x1e6b2e,0x2f8f3e,0x57a83e,0x86c93e].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.9,flatShading:true}));
+  const trunkMat = new THREE.MeshStandardMaterial({ map: barkTex, roughness: 1 });
+  const trees = [], bushes = [], grassTufts = [];
+  function makeTree(x,z,s){
     const g = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22*s, 0.3*s, 1.6*s, 7), trunkMat);
-    trunk.position.y = 0.8*s;
-    g.add(trunk);
-    for (let i = 0; i < 3; i++) {
-      const cone = new THREE.Mesh(new THREE.ConeGeometry((1.3-i*0.25)*s, 1.2*s, 8), leafMat);
-      cone.position.y = (1.7 + i*0.8)*s;
-      g.add(cone);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.24*s,.42*s,2.6*s,8), trunkMat);
+    trunk.position.y = 1.3*s; trunk.castShadow = true; g.add(trunk);
+    const root = new THREE.Mesh(new THREE.CylinderGeometry(.6*s,.75*s,.5*s,8), trunkMat);
+    root.position.y = .22*s; g.add(root);
+    const n = 5+(Math.random()*3|0);
+    for(let i=0;i<n;i++){
+      const r = R(.8,1.5)*s;
+      const b = new THREE.Mesh(new THREE.IcosahedronGeometry(r,1), leafMats[(Math.random()*leafMats.length)|0]);
+      b.position.set(R(-1,1)*s, R(2.6,4.6)*s, R(-1,1)*s);
+      b.scale.y = .82; b.castShadow = true; g.add(b);
     }
-    g.position.set(x, 0, z);
-    scene.add(g);
-    return g;
+    // cipó
+    if(Math.random()<.5){
+      const vine = new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,2.2*s,5), leafMats[0]);
+      vine.position.set(R(-.8,.8), 2.4*s, R(-.5,.5)); g.add(vine);
+    }
+    g.position.set(x,0,z); g.rotation.y = Math.random()*7; scene.add(g); trees.push(g); return g;
   }
-  for (let i = 0; i < 46; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const x = side * (5.2 + Math.random() * 8);
-    const z = 12 - Math.random() * 110;
-    const s = 0.8 + Math.random() * 0.9;
-    trees.push(makeTree(x, z, s));
+  for(let i=0;i<38;i++){ const side=i%2?1:-1; makeTree(side*R(5.6,13), R(-115,12), R(.9,1.7)); }
+  const bushGeo = new THREE.IcosahedronGeometry(.7,1);
+  for(let i=0;i<44;i++){
+    const b = new THREE.Mesh(bushGeo, leafMats[(Math.random()*4)|0]);
+    b.position.set((Math.random()<.5?-1:1)*R(4.8,11), .4, R(-110,10));
+    b.scale.set(R(.7,1.6),R(.5,1),R(.7,1.6)); b.castShadow=true; scene.add(b); bushes.push(b);
+  }
+  const tuftMat = new THREE.MeshStandardMaterial({ color:0x4caf50, roughness:1, side:THREE.DoubleSide });
+  const tuftGeo = new THREE.PlaneGeometry(.7,.5);
+  for(let i=0;i<130;i++){
+    const t = new THREE.Mesh(tuftGeo, tuftMat);
+    t.position.set(R(-14,14), .24, R(-110,10)); t.rotation.y = Math.random()*3; scene.add(t); grassTufts.push(t);
+  }
+  const flowerMats = [0xff5da2,0xffd166,0xffffff,0xc084fc].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.6}));
+  for(let i=0;i<36;i++){
+    const f = new THREE.Mesh(new THREE.SphereGeometry(.09,6,6), flowerMats[i%4]);
+    f.position.set(R(-9,9), .14, R(-105,8)); scene.add(f);
   }
 
-  // ---------- Jogador (terceira pessoa) ----------
+  // folhas caindo + poeira + vaga-lumes
+  const leaves = [];
+  const leafGeo = new THREE.PlaneGeometry(.22,.16);
+  const leafCols = [0xd97706,0x84cc16,0x65a30d,0xfbbf24].map(c=>new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:.95}));
+  for(let i=0;i<26;i++){
+    const m = new THREE.Mesh(leafGeo, leafCols[i%4]);
+    m.position.set(R(-12,12), R(2,9), R(-60,6));
+    m.userData = { vy:R(.6,1.4), ph:Math.random()*7, sw:R(1,3) };
+    scene.add(m); leaves.push(m);
+  }
+  const dust = [];
+  for(let i=0;i<14;i++){
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xd9c9a8, transparent:true, opacity:0, depthWrite:false }));
+    s.userData={life:0}; scene.add(s); dust.push(s);
+  }
+  const fireflies = [];
+  for(let i=0;i<22;i++){
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xd9f99d, transparent:true, opacity:0, depthWrite:false }));
+    s.scale.set(.5,.5,1); s.position.set(R(-10,10), R(.6,3), R(-60,0));
+    s.userData={ph:Math.random()*7}; scene.add(s); fireflies.push(s);
+  }
+  // neblina rasteira (sombrio)
+  const mists = [];
+  for(let i=0;i<8;i++){
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xcbd5e1, transparent:true, opacity:0, depthWrite:false }));
+    s.scale.set(R(18,30), R(4,7), 1); s.position.set(R(-10,10), 1, R(-70,0));
+    s.userData={v:R(.5,1.4)}; scene.add(s); mists.push(s);
+  }
+
+  // ---------- Explorador realista (terceira pessoa) ----------
   const player = new THREE.Group();
-  const skin = new THREE.MeshLambertMaterial({ color: 0xf2c79b });
-  const shirt = new THREE.MeshLambertMaterial({ color: 0xdc2626 });
-  const pants = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
-  const hatM = new THREE.MeshLambertMaterial({ color: 0x92400e });
-
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.7, 0.36), shirt);
-  torso.position.y = 1.15; player.add(torso);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), skin);
-  head.position.y = 1.75; player.add(head);
-  const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.22, 10), hatM);
-  hatTop.position.y = 2.05; player.add(hatTop);
-  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 10), hatM);
-  hatBrim.position.y = 1.95; player.add(hatBrim);
-  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.7, 0.24), pants);
-  const legR = legL.clone();
-  legL.position.set(-0.16, 0.45, 0); legR.position.set(0.16, 0.45, 0);
-  player.add(legL, legR);
-  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.6, 0.2), shirt);
-  const armR = armL.clone();
-  armL.position.set(-0.42, 1.15, 0); armR.position.set(0.42, 1.15, 0);
-  player.add(armL, armR);
+  const skinM = new THREE.MeshStandardMaterial({ color:0xd9a06b, roughness:.65 });
+  const shirtM = new THREE.MeshStandardMaterial({ color:0xb8a06a, roughness:.85 });
+  const pantsM = new THREE.MeshStandardMaterial({ color:0x5b4a33, roughness:.9 });
+  const bootM = new THREE.MeshStandardMaterial({ color:0x3a2513, roughness:.7 });
+  const hatM = new THREE.MeshStandardMaterial({ color:0x8a6a3b, roughness:.9 });
+  const packM = new THREE.MeshStandardMaterial({ color:0x7a4a22, roughness:.9 });
+  function bx(w,h,d,m,x,y,z){ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); o.castShadow=true; player.add(o); return o; }
+  const bootL = bx(.2,.16,.34,bootM,-.15,.08,.02), bootR = bx(.2,.16,.34,bootM,.15,.08,.02);
+  const legL = bx(.2,.52,.22,pantsM,-.15,.42,0), legR = bx(.2,.52,.22,pantsM,.15,.42,0);
+  const torso = bx(.6,.66,.34,shirtM,0,1.02,0);
+  bx(.2,.16,.02,new THREE.MeshStandardMaterial({color:0x8a744a}),-.15,1.05,.18);
+  bx(.2,.16,.02,new THREE.MeshStandardMaterial({color:0x8a744a}),.15,1.05,.18);
+  const armL = bx(.17,.56,.19,shirtM,-.4,1.0,0), armR = bx(.17,.56,.19,shirtM,.4,1.0,0);
+  const handL = new THREE.Mesh(new THREE.SphereGeometry(.09,8,8), skinM); handL.position.set(-.4,.68,0); handL.castShadow=true; player.add(handL);
+  const handR = handL.clone(); handR.position.x=.4; player.add(handR);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.24,16,16), skinM); head.position.y=1.6; head.castShadow=true; player.add(head);
+  const eyeM = new THREE.MeshBasicMaterial({color:0x1c1917});
+  for(const dx of[-.09,.09]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.032,6,6),eyeM); e.position.set(dx,1.63,-.21); player.add(e); }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(.045,6,6), skinM); nose.position.set(0,1.57,-.24); player.add(nose);
+  const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(.2,.24,.2,12), hatM); hatTop.position.y=1.86; hatTop.castShadow=true; player.add(hatTop);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.05,14), hatM); brim.position.y=1.76; player.add(brim);
+  const pack = bx(.44,.5,.24,packM,0,1.05,.3);
+  const roll = new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.46,8), new THREE.MeshStandardMaterial({color:0x3f6212})); roll.rotation.z=Math.PI/2; roll.position.set(0,1.36,.3); player.add(roll);
   scene.add(player);
 
-  // ---------- Obstáculos ----------
-  const obstacles = []; // {mesh, kind, laneX, z, hit}
-  const logMat = new THREE.MeshLambertMaterial({ color: 0x7c4a21 });
-  const logDark = new THREE.MeshLambertMaterial({ color: 0x4a2c12 });
-  const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  const rimMat = new THREE.MeshLambertMaterial({ color: 0x5b3a1e });
-  const goldMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24, emissive: 0x92600a });
-  const gemMat = new THREE.MeshLambertMaterial({ color: 0x22d3ee, emissive: 0x0e7490 });
+  // ---------- Obstáculos Pitfall! realistas ----------
+  const LANES = [-2.3, 0, 2.3];
+  const obstacles = [];
+  const mossM = new THREE.MeshStandardMaterial({ color:0x3f7a2e, roughness:1 });
+  const goldM = new THREE.MeshStandardMaterial({ color:0xfbbf24, metalness:1, roughness:.28 });
+  const gemM = new THREE.MeshStandardMaterial({ color:0x22d3ee, metalness:.3, roughness:.15, emissive:0x0e7490, emissiveIntensity:.7 });
+  const woodM = new THREE.MeshStandardMaterial({ color:0x6b4423, roughness:.9 });
+  const waterM = new THREE.MeshStandardMaterial({ color:0x0ea5e9, transparent:true, opacity:.82, roughness:.15, metalness:.4 });
+  const crocM = new THREE.MeshStandardMaterial({ color:0x2f5d33, roughness:.8, flatShading:true });
+  const bellyM = new THREE.MeshStandardMaterial({ color:0xc9b78a, roughness:.9 });
 
-  function spawnLog(laneX, z) {
+  function spawnLog(x, z) {
     const g = new THREE.Group();
-    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 2.6, 10), logMat);
-    log.rotation.z = Math.PI / 2;
-    log.position.y = 0.36;
-    g.add(log);
-    for (let i = -1; i <= 1; i++) {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.05, 6, 12), logDark);
-      ring.rotation.y = Math.PI / 2;
-      ring.position.set(i * 0.8, 0.36, 0);
-      g.add(ring);
+    const len = R(2.4,2.9);
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(.38,.42,len,12), new THREE.MeshStandardMaterial({ map: barkTex, roughness:1 }));
+    log.rotation.z = Math.PI/2; log.position.y = .4; log.castShadow = true; g.add(log);
+    for(const ex of [-len/2, len/2]){
+      const cap = new THREE.Mesh(new THREE.CircleGeometry(.38,14), new THREE.MeshStandardMaterial({ map: ringTex, roughness:.9 }));
+      cap.position.set(ex + (ex<0?-.01:.01), .4, 0); cap.rotation.y = ex<0?-Math.PI/2:Math.PI/2; g.add(cap);
     }
-    g.position.set(laneX, 0, z);
-    scene.add(g);
-    obstacles.push({ mesh: g, kind: "tree", laneX, z, hit: false });
+    for(let i=0;i<3;i++){ const mo=new THREE.Mesh(new THREE.SphereGeometry(R(.12,.2),7,7), mossM); mo.position.set(R(-1,1),.68,R(-.2,.2)); g.add(mo); }
+    const stub = new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,.6,7), trunkMat);
+    stub.position.set(R(-.8,.8),.85,0); stub.rotation.x=.5; stub.castShadow=true; g.add(stub);
+    g.position.set(x,0,z); scene.add(g);
+    obstacles.push({ mesh:g, kind:"tree", x, z, hit:false });
   }
-  function spawnHole(laneX, z) {
+  function spawnHole(x, z) {
     const g = new THREE.Group();
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 2.6), rimMat);
-    rim.position.y = 0.06; g.add(rim);
-    const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.2), holeMat);
-    hole.rotation.x = -Math.PI / 2; hole.position.y = 0.13; g.add(hole);
-    // olhos do jacaré (Pitfall!) dentro do buraco
-    const eyeM = new THREE.MeshBasicMaterial({ color: 0x22ff66 });
-    for (const dx of [-0.3, 0.3]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), eyeM);
-      eye.position.set(dx, 0.25, 0.4); g.add(eye);
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.05,1.1,14,1,true),
+      new THREE.MeshStandardMaterial({ color:0x4a3018, roughness:1, side:THREE.DoubleSide }));
+    wall.position.y = -.45; g.add(wall);
+    const water = new THREE.Mesh(new THREE.CircleGeometry(1.12,18), waterM);
+    water.rotation.x = -Math.PI/2; water.position.y = -.55; g.add(water);
+    // jacaré animado
+    const croc = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(.5,10,8), crocM); body.scale.set(1.1,.55,1.5); body.castShadow=true; croc.add(body);
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(.42,10,8), bellyM); belly.scale.set(1,.4,1.3); belly.position.y=-.12; croc.add(belly);
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(.5,.22,.7), crocM); snout.position.set(0,.08,-.75); croc.add(snout);
+    const jaw = new THREE.Mesh(new THREE.BoxGeometry(.44,.08,.65), bellyM); jaw.position.set(0,-.06,-.75); croc.add(jaw); croc.userData.jaw = jaw;
+    for(const dx of [-.2,.2]){
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(.09,8,8), new THREE.MeshStandardMaterial({color:0xfacc15,roughness:.3}));
+      eye.position.set(dx,.32,-.35); croc.add(eye);
+      const pup = new THREE.Mesh(new THREE.SphereGeometry(.04,6,6), new THREE.MeshBasicMaterial({color:0x000000}));
+      pup.position.set(dx,.36,-.42); croc.add(pup);
     }
-    const teeth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.15), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    teeth.position.set(0, 0.2, 0.75); g.add(teeth);
-    g.position.set(laneX, 0, z);
-    scene.add(g);
-    obstacles.push({ mesh: g, kind: "hole", laneX, z, hit: false });
+    for(let i=0;i<6;i++){ const t=new THREE.Mesh(new THREE.ConeGeometry(.05,.12,5), new THREE.MeshBasicMaterial({color:0xffffff})); t.position.set(-.18+i*.075,.2,-1.02); t.rotation.x=Math.PI; croc.add(t); }
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(.28,1.2,8), crocM); tail.rotation.x=Math.PI/2; tail.position.set(0,.05,1.2); croc.add(tail); croc.userData.tail = tail;
+    for(let i=0;i<8;i++){ const bump=new THREE.Mesh(new THREE.SphereGeometry(.07,6,6), crocM); bump.position.set(R(-.3,.3),.28,R(-.5,.5)); croc.add(bump); }
+    croc.position.y = -.5; g.add(croc); g.userData.croc = croc;
+    // borda de terra
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(1.35,.22,8,18), new THREE.MeshStandardMaterial({ map: dirtTex, roughness:1 }));
+    rim.rotation.x = Math.PI/2; rim.position.y = .05; rim.castShadow=true; g.add(rim);
+    g.position.set(x,0,z); scene.add(g);
+    obstacles.push({ mesh:g, kind:"hole", x, z, hit:false });
   }
-  function spawnTreasure(laneX, z) {
+  function spawnTreasure(x, z) {
     const g = new THREE.Group();
-    const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.35), goldMat);
-    box.position.y = 1.0; g.add(box);
-    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.22), gemMat);
-    gem.position.y = 1.55; g.add(gem);
-    g.position.set(laneX, 0, z);
-    scene.add(g);
-    obstacles.push({ mesh: g, kind: "treasure", laneX, z, hit: false, spin: gem });
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(.7,.45,.5), woodM); chest.position.y=.55; chest.castShadow=true; g.add(chest);
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(.7,.14,.5), new THREE.MeshStandardMaterial({color:0x4a2f18,roughness:.8}));
+    lid.position.set(0,.85,-.22); lid.rotation.x=-.7; g.add(lid);
+    for(let i=0;i<5;i++){
+      const coin = new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.04,12), goldM);
+      coin.position.set(R(-.25,.25), .82+R(0,.08), R(-.15,.15)); coin.rotation.x=Math.random(); g.add(coin);
+    }
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.24), gemM); gem.position.y=1.25; gem.castShadow=true; g.add(gem); g.userData.gem = gem;
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xfde68a, transparent:true, opacity:.55, depthWrite:false }));
+    glow.scale.set(1.6,1.6,1); glow.position.y=1.1; g.add(glow);
+    const l = new THREE.PointLight(0xfbbf24, .8, 5); l.position.y=1.4; g.add(l);
+    g.position.set(x,0,z); scene.add(g);
+    obstacles.push({ mesh:g, kind:"treasure", x, z, hit:false });
   }
-
   function spawnRow(z) {
-    // garante sempre 1 trilha livre: bloqueia 1 ou 2 trilhas
     const hard = theme === "sombrio";
-    const idx = [0, 1, 2].sort(() => Math.random() - 0.5);
-    const blockCount = Math.random() < (hard ? 0.55 : 0.3) ? 2 : 1;
-    for (let i = 0; i < blockCount; i++) {
+    const idx = [0,1,2].sort(()=>Math.random()-.5);
+    const blocks = Math.random() < (hard?.6:.32) ? 2 : 1;
+    for(let i=0;i<blocks;i++){
       const lane = idx[i];
-      const r = Math.random();
-      if (r < 0.5) spawnLog(LANES[lane], z);
-      else spawnHole(LANES[lane], z);
+      if(Math.random()<.5) spawnLog(LANES[lane], z); else spawnHole(LANES[lane], z);
     }
-    // tesouro na trilha livre (Pitfall!)
-    const freeLane = idx[blockCount] !== undefined ? idx[blockCount] : idx[2];
-    if (Math.random() < 0.7) spawnTreasure(LANES[freeLane], z - 1.5);
+    const free = idx[blocks] ?? idx[2];
+    if(Math.random()<.75) spawnTreasure(LANES[free], z-2);
   }
 
-  // ---------- Estado ----------
-  let theme = "flores";
-  let score = 0, lives = 3, dist = 0, mult = 1;
-  let best = +(localStorage.getItem("floresta3d_best") || 0);
-  el("best").textContent = best;
-  el("path").textContent = THEMES.flores.label;
+  // ---------- Estado do jogo ----------
+  const THEMES = {
+    flores:  { label:"Flores 🌸", mult:1, skyTop:0x3d7ac8, skyBot:0xe8f3d8, fog:0xbcd9a8, fogD:.012, sun:1.35, amb:.85 },
+    sombrio: { label:"Sombrio 🌑 x2", mult:2, skyTop:0x12082e, skyBot:0x3b2a5e, fog:0x2a2140, fogD:.028, sun:.5, amb:.4 }
+  };
+  let theme="flores", mult=1;
+  let score=0, lives=3, dist=0;
+  let best=+(localStorage.getItem("floresta3d_best")||0); el("best").textContent=best; el("path").textContent=THEMES.flores.label;
+  let lane=1, targetX=0, py=0, vy=0, onGround=true, inv=0;
+  let speed=12, running=false, paused=false, over=false, choosing=false;
+  let spawnAcc=0, nextChoiceAt=600, runTime=0, shake=0;
 
-  let lane = 1, targetX = 0;
-  let py = 0, vy = 0, onGround = true, inv = 0;
-  let speed = 12;
-  let running = false, paused = false, over = false, choosing = false;
-  let spawnZ = -70, nextChoiceAt = 600, runTime = 0;
-
-  function beep(f = 440, d = 0.12, type = "sine") {
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      beep.ctx = beep.ctx || new AC();
-      const o = beep.ctx.createOscillator(), g = beep.ctx.createGain();
-      o.connect(g); g.connect(beep.ctx.destination);
-      o.frequency.value = f; o.type = type;
-      g.gain.setValueAtTime(0.12, beep.ctx.currentTime);
-      o.start(); o.stop(beep.ctx.currentTime + d);
-    } catch (e) {}
+  function beep(f=440,d=.12,t="sine"){ try{ const AC=window.AudioContext||window.webkitAudioContext; beep.ctx=beep.ctx||new AC();
+    const o=beep.ctx.createOscillator(),g=beep.ctx.createGain(); o.connect(g);g.connect(beep.ctx.destination);
+    o.frequency.value=f;o.type=t;g.gain.setValueAtTime(.12,beep.ctx.currentTime);o.start();o.stop(beep.ctx.currentTime+d);}catch(e){} }
+  function puff(x,y,z){
+    const s = dust.find(d=>d.userData.life<=0); if(!s) return;
+    s.position.set(x,y,z); s.userData.life=.6; s.scale.set(.8,.8,1);
   }
-
-  function applyTheme(t) {
-    theme = t;
-    const th = THEMES[t];
-    mult = th.mult;
-    scene.background.setHex(th.sky);
-    scene.fog.color.setHex(th.fog);
-    groundMat.color.setHex(th.ground);
-    trailMat.color.setHex(th.trail);
-    leafMat.color.setHex(th.tree);
-    el("path").textContent = th.label;
+  function applyTheme(t){
+    theme=t; mult=THEMES[t].mult;
+    const th=THEMES[t];
+    skyDome.material.uniforms.top.value.setHex(th.skyTop);
+    skyDome.material.uniforms.bot.value.setHex(th.skyBot);
+    scene.fog.color.setHex(th.fog); scene.fog.density=th.fogD;
+    sun.intensity=th.sun;
+    el("path").textContent=th.label;
   }
-
-  function reset() {
-    for (const o of obstacles) scene.remove(o.mesh);
-    obstacles.length = 0;
-    score = 0; lives = 3; dist = 0;
-    lane = 1; targetX = 0; py = 0; vy = 0; onGround = true; inv = 0;
-    speed = 12; spawnZ = -70; nextChoiceAt = 600; runTime = 0;
-    over = false; paused = false; choosing = false;
-    applyTheme("flores");
-    el("over").classList.remove("show");
-    el("choice").classList.remove("show");
-    el("start").classList.remove("show");
-    el("score").textContent = "0"; el("lives").textContent = "3"; el("dist").textContent = "0";
-    running = true;
-    msg("Corra! ← → troca de trilha • ↑ pula 🪵 e 🕳️!");
+  function reset(){
+    for(const o of obstacles) scene.remove(o.mesh); obstacles.length=0;
+    score=0;lives=3;dist=0;lane=1;targetX=0;py=0;vy=0;onGround=true;inv=0;
+    speed=12;spawnAcc=0;nextChoiceAt=600;runTime=0;shake=0;
+    over=false;paused=false;choosing=false;applyTheme("flores");
+    el("over").classList.remove("show");el("choice").classList.remove("show");el("start").classList.remove("show");
+    el("score").textContent="0";el("lives").textContent="3";el("dist").textContent="0";
+    running=true; msg("Corra! ← → troca de trilha • ↑ pula 🪵 e 🕳️!");
   }
-
-  function damage(why) {
-    if (inv > 0 || over) return;
-    lives--; inv = 1.6;
-    beep(160, 0.25, "sawtooth");
-    el("lives").textContent = lives;
-    if (lives <= 0) {
-      over = true; running = false;
-      const s = Math.floor(score);
-      if (s > best) { best = s; localStorage.setItem("floresta3d_best", best); el("best").textContent = best; }
-      el("over-text").textContent = `${why} Pontos: ${s} • Distância: ${Math.floor(dist)}m`;
-      el("over").classList.add("show");
-      msg("💀 Fim de jogo!");
-    } else {
-      msg(`${why} -1 ❤️!`);
-    }
+  function damage(why){
+    if(inv>0||over) return;
+    lives--; inv=1.6; shake=.5; beep(150,.28,"sawtooth");
+    el("lives").textContent=lives; puff(player.position.x,1,0);
+    if(lives<=0){ over=true; running=false;
+      const s=Math.floor(score);
+      if(s>best){best=s;localStorage.setItem("floresta3d_best",best);el("best").textContent=best;}
+      el("over-text").textContent=`${why} Pontos: ${s} • Distância: ${Math.floor(dist)}m`;
+      el("over").classList.add("show"); msg("💀 Fim de jogo!");
+    } else msg(`${why} -1 ❤️!`);
   }
-
-  function jump() {
-    if (!running || paused || over || choosing) return;
-    if (onGround) { vy = 8.2; onGround = false; beep(520, 0.1); }
-  }
-  function goLeft() { if (!running || paused || choosing || over) return; lane = Math.max(0, lane - 1); targetX = LANES[lane]; }
-  function goRight() { if (!running || paused || choosing || over) return; lane = Math.min(2, lane + 1); targetX = LANES[lane]; }
-
-  function choose(t) {
-    applyTheme(t);
-    choosing = false; paused = false;
-    el("choice").classList.remove("show");
-    nextChoiceAt = score + 600;
-    msg(t === "sombrio" ? "🌑 Caminho Sombrio! Mais rápido, pontos x2!" : "🌸 Caminho das Flores! Tranquilo.");
-    beep(t === "sombrio" ? 220 : 880, 0.2);
-  }
+  function jump(){ if(!running||paused||over||choosing) return; if(onGround){ vy=8.6; onGround=false; beep(540,.1); puff(player.position.x,.2,0);} }
+  function goL(){ if(!running||paused||choosing||over) return; lane=Math.max(0,lane-1); targetX=LANES[lane]; }
+  function goR(){ if(!running||paused||choosing||over) return; lane=Math.min(2,lane+1); targetX=LANES[lane]; }
+  function choose(t){ applyTheme(t); choosing=false; paused=false; el("choice").classList.remove("show");
+    nextChoiceAt=score+600; msg(t==="sombrio"?"🌑 Sombrio! Neblina, vaga-lumes e x2!":"🌸 Flores! Dia claro."); beep(t==="sombrio"?220:880,.2); }
 
   // ---------- Loop ----------
   const clock = new THREE.Clock();
-  function update(dt) {
-    if (!running || paused || over || choosing) return;
-    runTime += dt;
+  function update(dt){
+    if(!running||paused||over||choosing) return;
+    runTime+=dt;
+    const hard = theme==="sombrio";
+    speed = (hard?16.5:12) + Math.min(10, dist*.02);
+    dist += speed*dt; score += dt*28*mult;
+    if(score>=nextChoiceAt){ choosing=true; paused=true; el("choice").classList.add("show"); beep(990,.2); }
 
-    const base = theme === "sombrio" ? 16 : 12;
-    speed = base + Math.min(10, dist * 0.02);
-    dist += speed * dt;
-    score += dt * 28 * mult;
-
-    if (score >= nextChoiceAt) {
-      choosing = true; paused = true;
-      el("choice").classList.add("show");
-      beep(990, 0.2);
-    }
-
-    // jogador: trilha + pulo + corrida
-    player.position.x += (targetX - player.position.x) * Math.min(1, dt * 10);
-    if (!onGround) {
-      vy -= 24 * dt;
-      py += vy * dt;
-      if (py <= 0) { py = 0; vy = 0; onGround = true; }
-    }
+    // jogador
+    player.position.x += (targetX-player.position.x)*Math.min(1,dt*9);
+    player.rotation.z = (player.position.x-targetX)*.18;
+    player.rotation.y = (player.position.x-targetX)*.12;
+    if(!onGround){ vy-=26*dt; py+=vy*dt; if(py<=0){py=0;vy=0;onGround=true;puff(player.position.x,.15,0);} }
     player.position.y = py;
-    const sw = Math.sin(runTime * (onGround ? 12 : 4)) * (onGround ? 0.55 : 0.25);
-    legL.rotation.x = sw; legR.rotation.x = -sw;
-    armL.rotation.x = -sw; armR.rotation.x = sw;
-    torso.rotation.x = onGround ? 0.08 : -0.1;
-    if (inv > 0) { inv -= dt; player.visible = Math.floor(Date.now() / 150) % 2 === 0; }
-    else player.visible = true;
+    player.position.z = 0;
+    const sw = Math.sin(runTime*(onGround?13:5))*(onGround?.6:.3);
+    legL.rotation.x=sw; legR.rotation.x=-sw; bootL.position.z=sw*.12; bootR.position.z=-sw*.12;
+    armL.rotation.x=-sw*.9; armR.rotation.x=sw*.9;
+    torso.position.y = 1.02 + (onGround?Math.abs(Math.sin(runTime*13))*.05:0);
+    head.position.y = 1.6 + (onGround?Math.abs(Math.sin(runTime*13))*.04:0);
+    if(inv>0){ inv-=dt; player.visible=Math.floor(Date.now()/140)%2===0; } else player.visible=true;
 
-    // camera em terceira pessoa (atrás do jogador)
-    camera.position.set(player.position.x * 0.55, 3.4 + py * 0.25, 6.8);
-    camera.lookAt(player.position.x * 0.7, 1.3, -7);
+    // câmera terceira pessoa com leve balanço + shake
+    if(shake>0) shake-=dt;
+    const shx = shake>0?R(-.12,.12)*shake:0;
+    camera.position.x += ((player.position.x*.55+shx+Math.sin(runTime*1.3)*.05)-camera.position.x)*Math.min(1,dt*6);
+    camera.position.y = 3.0 + py*.28;
+    camera.position.z = 6.2;
+    camera.lookAt(player.position.x*.72, 1.35, -8);
+    camera.fov = 62 + Math.min(8,(speed-12)); camera.updateProjectionMatrix();
 
-    // árvores reciclando
-    for (const t of trees) {
-      t.position.z += speed * dt;
-      if (t.position.z > 14) {
-        t.position.z -= 120;
-        t.position.x = (Math.random() < 0.5 ? -1 : 1) * (5.2 + Math.random() * 8);
-      }
+    // mundo anda
+    for(const t of trees){ t.position.z+=speed*dt; if(t.position.z>16){ t.position.z-=130; t.position.x=(Math.random()<.5?-1:1)*R(5.6,13);} }
+    for(const b of bushes){ b.position.z+=speed*dt; if(b.position.z>14){ b.position.z-=125; b.position.x=(Math.random()<.5?-1:1)*R(4.8,11);} }
+    for(const t of grassTufts){ t.position.z+=speed*dt; if(t.position.z>14) t.position.z-=125; }
+    for(const s of edgeStones){ s.position.z+=speed*dt; if(s.position.z>14) s.position.z-=125; }
+    for(const c of clouds){ c.position.x+=c.userData.v*dt; if(c.position.x>150) c.position.x=-150; }
+
+    // folhas, poeira, vaga-lumes, névoa
+    for(const l of leaves){
+      l.position.z+=speed*dt*.55; l.position.y-=l.userData.vy*dt; l.position.x+=Math.sin(runTime*l.userData.sw+l.userData.ph)*dt*1.4;
+      l.rotation.x+=dt*3; l.rotation.y+=dt*2;
+      if(l.position.y<0||l.position.z>10){ l.position.set(R(-12,12),R(5,10),R(-70,-10)); }
+    }
+    if(onGround && running && Math.random()<dt*8) puff(player.position.x+R(-.2,.2),.15,.5);
+    for(const d of dust){ if(d.userData.life>0){ d.userData.life-=dt; d.position.z+=speed*dt*.6; d.position.y+=dt*.8;
+      d.material.opacity=Math.max(0,d.userData.life*.6); const s=d.scale.x+dt*2; d.scale.set(s,s,1);} else d.material.opacity=0; }
+    const night = theme==="sombrio"?1:0;
+    for(const f of fireflies){
+      f.position.z+=speed*dt*.4; f.position.x+=Math.sin(runTime*2+f.userData.ph)*dt;
+      f.material.opacity += ((night?(.5+Math.sin(runTime*3+f.userData.ph)*.4):0)-f.material.opacity)*dt*3;
+      if(f.position.z>6){ f.position.set(R(-10,10),R(.6,3),R(-60,-20)); }
+    }
+    for(const m of mists){
+      m.position.z+=speed*dt*.5+m.userData.v*dt;
+      m.material.opacity += ((night?.22:.05)-m.material.opacity)*dt*2;
+      if(m.position.z>8) m.position.z-=75;
     }
 
-    // spawn por distância
-    spawnZ += speed * dt;
-    const gap = theme === "sombrio" ? 16 : 22;
-    if (spawnZ > -8) { spawnRow(-72); spawnZ = -72 + (gap - 14); }
+    // spawn
+    spawnAcc+=speed*dt;
+    const gap = hard?15:21;
+    if(spawnAcc>gap){ spawnAcc=0; spawnRow(-74); }
 
-    // move obstáculos + tesouro girando
-    for (let i = obstacles.length - 1; i >= 0; i--) {
-      const o = obstacles[i];
-      o.z += speed * dt;
-      o.mesh.position.z = o.z;
-      if (o.kind === "treasure" && o.spin) o.spin.rotation.y += dt * 3;
-      if (o.z > 8) { scene.remove(o.mesh); obstacles.splice(i, 1); continue; }
-
-      const dx = Math.abs(o.mesh.position.x - player.position.x);
-      const dz = Math.abs(o.z - 0);
-      if (o.kind === "treasure" && !o.hit && dz < 1.0 && dx < 1.0 && py < 2.2) {
-        o.hit = true;
-        score += 30 * mult; beep(880, 0.12);
-        msg("💰 Tesouro Pitfall! +" + (30 * mult));
-        scene.remove(o.mesh); obstacles.splice(i, 1); continue;
+    // obstáculos
+    for(let i=obstacles.length-1;i>=0;i--){
+      const o=obstacles[i];
+      o.z+=speed*dt; o.mesh.position.z=o.z;
+      if(o.kind==="treasure"&&o.mesh.userData.gem){ o.mesh.userData.gem.rotation.y+=dt*2.6; o.mesh.position.y=Math.sin(runTime*2+o.z)*.06; }
+      if(o.kind==="hole"&&o.mesh.userData.croc){
+        const c=o.mesh.userData.croc;
+        c.userData.jaw.rotation.x = -.25+Math.abs(Math.sin(runTime*3+o.z))*.3;
+        c.userData.tail.rotation.y = Math.sin(runTime*2.4+o.z)*.35;
       }
-      if (!o.hit && dz < 0.85 && dx < 1.05) {
-        if (o.kind === "tree" && py < 0.9) { o.hit = true; damage("🪵 Bateu na árvore caída!"); }
-        if (o.kind === "hole" && py < 0.3) { o.hit = true; damage("🕳️ Caiu no buraco do jacaré! 🐊"); }
+      if(o.z>9){ scene.remove(o.mesh); obstacles.splice(i,1); continue; }
+      const dx=Math.abs(o.x-player.position.x), dz=Math.abs(o.z-0);
+      if(o.kind==="treasure"&&!o.hit&&dz<1.1&&dx<1.1&&py<2.4){
+        o.hit=true; score+=30*mult; beep(920,.12); msg("💰 Tesouro Pitfall! +"+(30*mult));
+        scene.remove(o.mesh); obstacles.splice(i,1); continue;
+      }
+      if(!o.hit&&dz<.9&&dx<1.05){
+        if(o.kind==="tree"&&py<.95){ o.hit=true; damage("🪵 Bateu na árvore caída!"); }
+        if(o.kind==="hole"&&py<.32){ o.hit=true; damage("🕳️ Caiu no poço do jacaré! 🐊"); }
       }
     }
-
-    el("score").textContent = Math.floor(score);
-    el("dist").textContent = Math.floor(dist);
-    el("lives").textContent = lives;
+    el("score").textContent=Math.floor(score);
+    el("dist").textContent=Math.floor(dist);
+    el("lives").textContent=lives;
   }
-
-  function loop() {
+  function loop(){
     requestAnimationFrame(loop);
-    const dt = Math.min(0.05, clock.getDelta());
-    // idle: câmera suave antes de começar
-    if (!running && !over) {
-      runTime += dt;
-      camera.position.set(Math.sin(runTime * 0.3) * 2, 3.4, 6.8);
-      camera.lookAt(0, 1.3, -7);
-      for (const t of trees) { t.position.z += 3 * dt; if (t.position.z > 14) t.position.z -= 120; }
-    } else {
-      update(dt);
-    }
-    renderer.render(scene, camera);
+    const dt=Math.min(.05,clock.getDelta());
+    if(!running&&!over){ runTime+=dt;
+      camera.position.set(Math.sin(runTime*.25)*2.4,3.1,6.4); camera.lookAt(0,1.3,-8);
+      for(const t of trees){ t.position.z+=2.5*dt; if(t.position.z>16) t.position.z-=130; }
+      for(const l of leaves){ l.rotation.x+=dt; l.position.y-=dt*.4; if(l.position.y<0) l.position.y=8; }
+      for(const c of clouds){ c.position.x+=c.userData.v*dt; if(c.position.x>150) c.position.x=-150; }
+    } else update(dt);
+    // céu acompanha câmera
+    skyDome.position.copy(camera.position);
+    sunSpr.position.set(camera.position.x+46,52,camera.position.z-166);
+    sunCore.position.copy(sunSpr.position);
+    renderer.render(scene,camera);
   }
   loop();
-  msg("Aperte Começar! Biblioteca 3D Three.js carregada ✅");
+  msg("Motor 3D hiper-realista pronto ✅ Aperte Entrar na floresta!");
 
   // ---------- Entradas ----------
-  document.addEventListener("keydown", e => {
-    if (["ArrowLeft", "KeyA"].includes(e.code)) { e.preventDefault(); goLeft(); }
-    else if (["ArrowRight", "KeyD"].includes(e.code)) { e.preventDefault(); goRight(); }
-    else if (["Space", "ArrowUp", "KeyW"].includes(e.code)) { e.preventDefault(); jump(); }
-    else if (e.code === "KeyP") { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); }
-    else if (e.code === "Enter" && !running) reset();
+  document.addEventListener("keydown", e=>{
+    if(["ArrowLeft","KeyA"].includes(e.code)){e.preventDefault();goL();}
+    else if(["ArrowRight","KeyD"].includes(e.code)){e.preventDefault();goR();}
+    else if(["Space","ArrowUp","KeyW"].includes(e.code)){e.preventDefault();jump();}
+    else if(e.code==="KeyP"){paused=!paused;msg(paused?"⏸️ Pausado":"▶️ Continuando!");}
+    else if(e.code==="Enter"&&!running) reset();
   });
-
-  // swipe no canvas
-  let tx = 0, ty = 0;
   const cv = renderer.domElement;
-  cv.addEventListener("touchstart", e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
-  cv.addEventListener("touchend", e => {
-    const t = e.changedTouches[0];
-    const dx = t.clientX - tx, dy = t.clientY - ty;
-    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) { jump(); return; }
-    if (Math.abs(dx) > Math.abs(dy)) { dx > 0 ? goRight() : goLeft(); }
-    else if (dy < 0) jump();
+  let tx=0,ty=0;
+  cv.addEventListener("touchstart",e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;},{passive:true});
+  cv.addEventListener("touchend",e=>{
+    const t=e.changedTouches[0],dx=t.clientX-tx,dy=t.clientY-ty;
+    if(Math.abs(dx)<24&&Math.abs(dy)<24){jump();return;}
+    if(Math.abs(dx)>Math.abs(dy)){dx>0?goR():goL();} else if(dy<0) jump();
   });
-
-  el("btn-start").onclick = () => { reset(); beep(660); };
-  el("btn-again").onclick = reset;
-  el("btn-restart").onclick = reset;
-  el("btn-jump").onclick = () => { if (!running && !over) reset(); else jump(); };
-  el("btn-left").onclick = goLeft;
-  el("btn-right").onclick = goRight;
-  el("btn-pause").onclick = () => { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); };
-  el("btn-flores").onclick = () => choose("flores");
-  el("btn-sombrio").onclick = () => choose("sombrio");
+  el("btn-start").onclick=()=>{reset();beep(660);};
+  el("btn-again").onclick=reset;
+  el("btn-restart").onclick=reset;
+  el("btn-jump").onclick=()=>{ if(!running&&!over) reset(); else jump(); };
+  el("btn-left").onclick=goL; el("btn-right").onclick=goR;
+  el("btn-pause").onclick=()=>{paused=!paused;msg(paused?"⏸️ Pausado":"▶️ Continuando!");};
+  el("btn-flores").onclick=()=>choose("flores");
+  el("btn-sombrio").onclick=()=>choose("sombrio");
 })();
 </script>
 </body>
