@@ -2,31 +2,422 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>aba261006</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🌲 Aventura na Floresta</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #0f172a; color: #f8fafc;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 24px; text-align: center;
+      background: #0b1f14; color: #f0fdf4;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 12px;
     }
-    .card {
-      background: #1e293b; border-radius: 16px; padding: 32px;
-      max-width: 560px; width: 100%;
+    h1 { margin: 8px 0 2px; font-size: 1.6rem; text-align: center; }
+    p.sub { margin: 0 0 10px; color: #bbf7d0; text-align: center; }
+    #hud {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      background: #14532d; padding: 10px; border-radius: 12px;
+      margin-bottom: 8px; width: min(920px, 96vw);
     }
-    h1 { margin: 0 0 8px; }
-    p { color: #cbd5e1; }
-    a { color: #a855f7; }
+    .badge {
+      background: #052e16; border: 1px solid #22c55e; border-radius: 999px;
+      padding: 4px 12px; font-size: 0.9rem; white-space: nowrap;
+    }
+    #msg { min-height: 1.6em; font-weight: 700; text-align: center; margin: 4px 0; }
+    #wrap { position: relative; width: min(920px, 96vw); }
+    canvas {
+      width: 100%; height: auto; display: block;
+      border-radius: 14px; border: 3px solid #22c55e;
+      background: #052e16; touch-action: none;
+    }
+    #choice {
+      position: absolute; inset: 0; display: none;
+      background: rgba(0,0,0,0.72); border-radius: 14px;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 16px; gap: 10px;
+    }
+    #choice.show { display: flex; }
+    #choice h2 { margin: 0; }
+    #choice .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    button {
+      background: #22c55e; color: #052e16; border: 0; border-radius: 10px;
+      padding: 10px 14px; font-size: 1rem; font-weight: 800; cursor: pointer;
+    }
+    button.secondary { background: #334155; color: white; }
+    button.big { font-size: 1.15rem; padding: 14px 18px; }
+    #controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+    #legend {
+      width: min(920px, 96vw); background: #14532d; border-radius: 12px;
+      padding: 10px 14px; margin-top: 10px; font-size: 0.92rem; color: #e2e8f0;
+    }
+    footer { margin: 10px 0 20px; color: #86efac; font-size: 0.85rem; text-align: center; }
+    footer a { color: #bbf7d0; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>aba261006</h1>
-    <p>Projeto criado por Ana Elisa 5ºB, Anabella 5ºB e Benicio 4ºA.</p>
-    <p>Site publicado via GitHub Pages.</p>
-    <p><a href="https://larandreluizinfo.github.io/aba261006/">https://larandreluizinfo.github.io/aba261006/</a></p>
+  <h1>🌲 Aventura na Floresta 🍄</h1>
+  <p class="sub">Corra, pule os obstáculos e escolha seu caminho na bifurcação!</p>
+
+  <div id="hud">
+    <div class="badge">⭐ Pontos: <span id="score">0</span></div>
+    <div class="badge">❤️ Vidas: <span id="lives">3</span></div>
+    <div class="badge">📏 Distância: <span id="dist">0</span>m</div>
+    <div class="badge">🛤️ Caminho: <span id="path">Flores 🌸</span></div>
+    <div class="badge">🏆 Recorde: <span id="best">0</span></div>
   </div>
+
+  <div id="msg">Pressione ESPAÇO ou toque em PULAR para começar!</div>
+
+  <div id="wrap">
+    <canvas id="game" width="920" height="420"></canvas>
+    <div id="choice">
+      <h2>⚠️ Bifurcação! Escolha seu caminho:</h2>
+      <p>Dois caminhos diferentes na floresta...</p>
+      <div class="row">
+        <button id="btn-flores" class="big">🌸 Caminho das Flores<br><small>fácil • ponto x1</small></button>
+        <button id="btn-sombrio" class="big" style="background:#a855f7;color:white">🌑 Caminho Sombrio<br><small>difícil • ponto x2</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="btn-jump" class="big">⬆️ PULAR (Espaço)</button>
+    <button id="btn-pause" class="secondary">⏸️ Pausar</button>
+    <button id="btn-restart" class="secondary">🔄 Recomeçar</button>
+  </div>
+
+  <div id="legend">
+    <div><b>Como jogar:</b> ESPAÇO / ↑ / W ou botão PULAR para pular. Toque na tela também pula.</div>
+    <div style="margin-top:6px"><b>Obstáculos:</b></div>
+    <div>🪵 <b>Árvore caída</b> — tronco no chão, pule por cima!</div>
+    <div>🕳️ <b>Buraco</b> — falha no chão, pule para não cair!</div>
+    <div>🍎 Frutas dão pontos. 🔥 Bater tira 1 ❤️.</div>
+    <div style="margin-top:6px"><b>Dois caminhos:</b> 🌸 Flores (fácil) x 🌑 Sombrio (rápido, mais obstáculos, pontos dobrados).</div>
+  </div>
+
+  <footer>
+    Projeto criado por Ana Elisa 5ºB, Anabella 5ºB e Benicio 4ºA.<br>
+    <a href="https://larandreluizinfo.github.io/aba261006/">https://larandreluizinfo.github.io/aba261006/</a>
+  </footer>
+
+<script>
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const groundY = H - 70;
+
+  const el = id => document.getElementById(id);
+  const msg = t => { el("msg").textContent = t; };
+
+  let score = 0, lives = 3, dist = 0;
+  let best = +(localStorage.getItem("floresta_best") || 0);
+  el("best").textContent = best;
+
+  let running = false, paused = false, gameOver = false, showingChoice = false;
+  let speed = 280;
+  let currentPath = "flores"; // flores | sombrio
+  let multiplier = 1;
+  let nextChoiceAt = 500;
+
+  const player = { x: 130, y: groundY - 48, w: 36, h: 48, vy: 0, onGround: true, inv: 0 };
+  const GRAV = 2800, JUMP = -980;
+
+  let obstacles = []; // {kind:'tree'|'hole'|'fruit', x, w, h, y, taken}
+  let parts = []; // particulas
+  let bgTrees = [];
+  for (let i = 0; i < 14; i++) bgTrees.push({ x: Math.random()*W, s: 20+Math.random()*50, v: 0.3+Math.random()*0.5 });
+
+  let spawnT = 0;
+  let last = 0;
+
+  function beep(freq=440, dur=0.12, type="sine") {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      beep.ctx = beep.ctx || new AC();
+      const o = beep.ctx.createOscillator(), g = beep.ctx.createGain();
+      o.connect(g); g.connect(beep.ctx.destination);
+      o.frequency.value = freq; o.type = type;
+      g.gain.setValueAtTime(0.12, beep.ctx.currentTime);
+      o.start(); o.stop(beep.ctx.currentTime + dur);
+    } catch(e){}
+  }
+
+  function start() {
+    score = 0; lives = 3; dist = 0;
+    currentPath = "flores"; multiplier = 1; nextChoiceAt = 500;
+    speed = 280; obstacles = []; parts = []; spawnT = 0;
+    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.inv = 0;
+    gameOver = false; paused = false; showingChoice = false;
+    el("choice").classList.remove("show");
+    el("path").textContent = "Flores 🌸";
+    running = true;
+    msg("Corra! Pule 🪵 e 🕳️!");
+    beep(660);
+  }
+
+  function jump() {
+    if (!running) { start(); return; }
+    if (gameOver) { start(); return; }
+    if (paused || showingChoice) return;
+    if (player.onGround) {
+      player.vy = JUMP; player.onGround = false;
+      beep(520, 0.1);
+    }
+  }
+
+  function choosePath(p) {
+    currentPath = p;
+    multiplier = (p === "sombrio") ? 2 : 1;
+    el("path").textContent = p === "sombrio" ? "Sombrio 🌑 x2" : "Flores 🌸";
+    showingChoice = false; paused = false;
+    el("choice").classList.remove("show");
+    nextChoiceAt = score + 500;
+    msg(p === "sombrio" ? "🌑 Você entrou no Caminho Sombrio! Coragem! x2 pontos" : "🌸 Você seguiu pelas Flores! Caminho tranquilo.");
+    beep(p === "sombrio" ? 220 : 880, 0.2);
+  }
+
+  function damage(why) {
+    if (player.inv > 0 || gameOver) return;
+    lives--; player.inv = 1.5;
+    beep(180, 0.25, "sawtooth");
+    burst(player.x+18, player.y+24, "🔥");
+    if (lives <= 0) {
+      gameOver = true; running = false;
+      if (score > best) { best = Math.floor(score); localStorage.setItem("floresta_best", best); el("best").textContent = best; }
+      msg(`💀 Fim de jogo! ${why} Pontos: ${Math.floor(score)}. Aperte PULAR para jogar de novo!`);
+    } else {
+      msg(`${why} -1 ❤️! Cuidado!`);
+      // quique para sair do buraco / tronco
+      player.vy = -700; player.onGround = false;
+    }
+  }
+
+  function burst(x, y, emoji) {
+    parts.push({ x, y, emoji, life: 0.8 });
+  }
+
+  function spawn() {
+    // dificuldade por caminho
+    const hard = currentPath === "sombrio";
+    const r = Math.random();
+    if (r < (hard ? 0.42 : 0.36)) {
+      // árvore caída
+      obstacles.push({ kind: "tree", x: W + 20, w: 70 + Math.random()*40, h: 34 });
+    } else if (r < (hard ? 0.78 : 0.66)) {
+      // buraco
+      obstacles.push({ kind: "hole", x: W + 20, w: 70 + Math.random()*(hard?70:40) });
+    } else {
+      // fruta no ar (precisa pular para pegar)
+      obstacles.push({ kind: "fruit", x: W + 20, w: 28, h: 28, y: groundY - 90 - Math.random()*70 });
+    }
+    // às vezes fruta junto
+    if (Math.random() < 0.3) obstacles.push({ kind: "fruit", x: W + 120, w: 28, h: 28, y: groundY - 80 - Math.random()*80 });
+  }
+
+  function isOverHole(px) {
+    for (const o of obstacles) if (o.kind === "hole") {
+      if (px > o.x && px < o.x + o.w) return o;
+    }
+    return null;
+  }
+
+  function update(dt) {
+    if (!running || paused || showingChoice || gameOver) return;
+
+    // velocidade aumenta com o tempo + caminho
+    const base = currentPath === "sombrio" ? 360 : 260;
+    speed = base + Math.min(220, dist * 0.35);
+    dist += speed * dt / 50;
+    score += dt * 22 * multiplier;
+
+    // bifurcação?
+    if (score >= nextChoiceAt) {
+      showingChoice = true; paused = true;
+      el("choice").classList.add("show");
+      beep(990, 0.2);
+      return;
+    }
+
+    // física
+    player.vy += GRAV * dt;
+    player.y += player.vy * dt;
+    if (player.inv > 0) player.inv -= dt;
+
+    const holeUnder = isOverHole(player.x + player.w/2);
+    const floorY = groundY - player.h;
+
+    if (player.y >= floorY) {
+      if (holeUnder && player.vy >= 0) {
+        // caiu no buraco!
+        damage("🕳️ Você caiu no buraco!");
+        // teleporta para fora do buraco para continuar
+        player.x = holeUnder.x + holeUnder.w + 4;
+        if (player.x > W - 100) player.x = 130;
+      } else {
+        player.y = floorY; player.vy = 0; player.onGround = true;
+      }
+    } else {
+      player.onGround = false;
+    }
+
+    // spawn
+    spawnT -= dt;
+    const interval = currentPath === "sombrio" ? 0.75 : 1.05;
+    if (spawnT <= 0) { spawn(); spawnT = interval + Math.random()*0.6; }
+
+    // move obstáculos
+    for (const o of obstacles) o.x -= speed * dt;
+    obstacles = obstacles.filter(o => o.x + (o.w||40) > -40);
+
+    // fundo
+    for (const t of bgTrees) {
+      t.x -= speed * t.v * dt;
+      if (t.x < -60) { t.x = W + 40; t.s = 20+Math.random()*50; }
+    }
+
+    // colisões
+    const px1 = player.x, px2 = player.x + player.w, py1 = player.y, py2 = player.y + player.h;
+    for (const o of obstacles) {
+      if (o.kind === "tree") {
+        const ox1 = o.x, ox2 = o.x + o.w, oy1 = groundY - o.h, oy2 = groundY;
+        if (px2 > ox1+6 && px1 < ox2-6 && py2 > oy1+6 && py1 < oy2) {
+          damage("🪵 Bateu na árvore caída!");
+          o.x = -100; // remove para não bater 2x
+        }
+      } else if (o.kind === "fruit" && !o.taken) {
+        const cx = o.x + 14, cy = o.y + 14;
+        if (cx > px1-6 && cx < px2+6 && cy > py1-6 && cy < py2+6) {
+          o.taken = true; o.x = -100;
+          score += 25 * multiplier; burst(cx, cy, "✨"); beep(880, 0.1);
+        }
+      }
+    }
+
+    // partículas
+    for (const p of parts) p.life -= dt;
+    parts = parts.filter(p => p.life > 0);
+
+    el("score").textContent = Math.floor(score);
+    el("lives").textContent = lives;
+    el("dist").textContent = Math.floor(dist);
+  }
+
+  function drawGround() {
+    // chão com falhas nos buracos
+    ctx.fillStyle = currentPath === "sombrio" ? "#1c1917" : "#3f6212";
+    // base
+    ctx.fillRect(0, groundY, W, H - groundY);
+    ctx.fillStyle = currentPath === "sombrio" ? "#44403c" : "#65a30d";
+    ctx.fillRect(0, groundY, W, 10);
+
+    // apaga onde tem buraco
+    for (const o of obstacles) if (o.kind === "hole") {
+      ctx.clearRect(o.x, groundY - 2, o.w, H - groundY + 2);
+      // borda do buraco
+      ctx.fillStyle = "#000";
+      ctx.fillRect(o.x, groundY + 8, o.w, H - groundY - 8);
+      ctx.fillStyle = "#78350f";
+      ctx.fillRect(o.x - 4, groundY, 6, 12);
+      ctx.fillRect(o.x + o.w - 2, groundY, 6, 12);
+      ctx.font = "22px serif"; ctx.fillText("🕳️", o.x + o.w/2 - 11, groundY + 34);
+      ctx.fillStyle = currentPath === "sombrio" ? "#44403c" : "#65a30d";
+    }
+  }
+
+  function draw() {
+    // céu
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    if (currentPath === "sombrio") { grad.addColorStop(0,"#0f0a2e"); grad.addColorStop(1,"#1e1b4b"); }
+    else { grad.addColorStop(0,"#86efac"); grad.addColorStop(1,"#14532d"); }
+    ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+    // sol/lua
+    ctx.font = "44px serif";
+    ctx.fillText(currentPath === "sombrio" ? "🌙" : "☀️", W-70, 60);
+
+    // árvores de fundo
+    ctx.font = "40px serif";
+    for (const t of bgTrees) {
+      ctx.globalAlpha = 0.55;
+      ctx.font = `${t.s}px serif`;
+      ctx.fillText(currentPath === "sombrio" ? "🌲" : "🌳", t.x, groundY - 6);
+    }
+    ctx.globalAlpha = 1;
+
+    drawGround();
+
+    // obstáculos
+    for (const o of obstacles) {
+      if (o.kind === "tree") {
+        ctx.fillStyle = "#78350f";
+        const y = groundY - o.h;
+        ctx.fillRect(o.x, y, o.w, o.h);
+        ctx.fillStyle = "#451a03";
+        for (let xx = o.x+6; xx < o.x+o.w; xx+=18) ctx.fillRect(xx, y+6, 4, o.h-12);
+        ctx.font = "30px serif";
+        ctx.fillText("🌿", o.x + 4, y + 8);
+        ctx.fillText("🪵", o.x + o.w - 34, y - 6);
+      } else if (o.kind === "fruit") {
+        ctx.font = "26px serif";
+        ctx.fillText("🍎", o.x, o.y + 22);
+      }
+    }
+
+    // jogador (pisca se invencível)
+    if (!(player.inv > 0 && Math.floor(Date.now()/150)%2===0)) {
+      ctx.font = "44px serif";
+      // corre inclinando? simples
+      ctx.fillText(player.onGround ? "🧑‍🌾" : "🦸", player.x, player.y + 42);
+    }
+
+    // partículas
+    ctx.font = "22px serif";
+    for (const p of parts) ctx.fillText(p.emoji, p.x, p.y);
+
+    if (gameOver) {
+      ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      ctx.font = "bold 42px system-ui"; ctx.fillText("💀 Fim de jogo!", W/2, H/2 - 10);
+      ctx.font = "20px system-ui"; ctx.fillText(`Pontos: ${Math.floor(score)}  •  Toque em PULAR para recomeçar`, W/2, H/2 + 30);
+      ctx.textAlign = "left";
+    } else if (!running && !gameOver && score===0) {
+      ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      ctx.font = "bold 30px system-ui"; ctx.fillText("🌲 Toque em PULAR para entrar na floresta!", W/2, H/2);
+      ctx.textAlign = "left";
+    }
+  }
+
+  function loop(t) {
+    const dt = Math.min(0.033, (t - last)/1000 || 0.016);
+    last = t;
+    update(dt); draw();
+    requestAnimationFrame(loop);
+  }
+
+  // eventos
+  document.addEventListener("keydown", e => {
+    if (["Space","ArrowUp","KeyW"].includes(e.code)) { e.preventDefault(); jump(); }
+    if (e.code === "KeyP") { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); }
+  });
+  canvas.addEventListener("pointerdown", jump);
+  el("btn-jump").onclick = jump;
+  el("btn-restart").onclick = start;
+  el("btn-pause").onclick = () => { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); };
+  el("btn-flores").onclick = () => choosePath("flores");
+  el("btn-sombrio").onclick = () => choosePath("sombrio");
+
+  // toque duplo na tela também pula (mobile)
+  let lastTouch = 0;
+  document.addEventListener("touchstart", e => {
+    const now = Date.now();
+    if (now - lastTouch < 300) e.preventDefault();
+    lastTouch = now;
+  }, {passive:false});
+
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
