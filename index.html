@@ -3,60 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>🌲 Aventura na Floresta</title>
+  <title>🌲 Aventura na Floresta 3D — Pitfall</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #0b1f14; color: #f0fdf4;
+      background: #07130c; color: #f0fdf4;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; padding: 12px;
     }
-    h1 { margin: 8px 0 2px; font-size: 1.6rem; text-align: center; }
+    h1 { margin: 8px 0 2px; font-size: 1.5rem; text-align: center; }
     p.sub { margin: 0 0 10px; color: #bbf7d0; text-align: center; }
     #hud {
       display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
       background: #14532d; padding: 10px; border-radius: 12px;
-      margin-bottom: 8px; width: min(920px, 96vw);
+      margin-bottom: 8px; width: min(960px, 96vw);
     }
     .badge {
       background: #052e16; border: 1px solid #22c55e; border-radius: 999px;
       padding: 4px 12px; font-size: 0.9rem; white-space: nowrap;
     }
     #msg { min-height: 1.6em; font-weight: 700; text-align: center; margin: 4px 0; }
-    #wrap { position: relative; width: min(920px, 96vw); }
-    canvas {
-      width: 100%; height: auto; display: block;
-      border-radius: 14px; border: 3px solid #22c55e;
-      background: #052e16; touch-action: none;
+    /* Palco 16:9 */
+    #stage {
+      position: relative;
+      width: min(960px, 96vw);
+      aspect-ratio: 16 / 9;
+      border-radius: 14px; overflow: hidden;
+      border: 3px solid #22c55e; background: #000;
     }
-    #choice {
+    #stage canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+    .overlay {
       position: absolute; inset: 0; display: none;
-      background: rgba(0,0,0,0.72); border-radius: 14px;
+      background: rgba(0,0,0,0.72);
       flex-direction: column; align-items: center; justify-content: center;
       text-align: center; padding: 16px; gap: 10px;
     }
-    #choice.show { display: flex; }
-    #choice h2 { margin: 0; }
-    #choice .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .overlay.show { display: flex; }
+    .overlay h2 { margin: 0; font-size: 1.3rem; }
+    .overlay p { margin: 0; color: #d1fae5; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     button {
       background: #22c55e; color: #052e16; border: 0; border-radius: 10px;
       padding: 10px 14px; font-size: 1rem; font-weight: 800; cursor: pointer;
     }
     button.secondary { background: #334155; color: white; }
-    button.big { font-size: 1.15rem; padding: 14px 18px; }
+    button.big { font-size: 1.05rem; padding: 12px 16px; }
     #controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
     #legend {
-      width: min(920px, 96vw); background: #14532d; border-radius: 12px;
+      width: min(960px, 96vw); background: #14532d; border-radius: 12px;
       padding: 10px 14px; margin-top: 10px; font-size: 0.92rem; color: #e2e8f0;
     }
     footer { margin: 10px 0 20px; color: #86efac; font-size: 0.85rem; text-align: center; }
     footer a { color: #bbf7d0; }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
 <body>
-  <h1>🌲 Aventura na Floresta 🍄</h1>
-  <p class="sub">Corra, pule os obstáculos e escolha seu caminho na bifurcação!</p>
+  <h1>🌲 Aventura na Floresta 3D 🐊</h1>
+  <p class="sub">Terceira pessoa 16:9 • inspirado em Pitfall! Corra, pule e escolha seu caminho.</p>
 
   <div id="hud">
     <div class="badge">⭐ Pontos: <span id="score">0</span></div>
@@ -66,11 +71,19 @@
     <div class="badge">🏆 Recorde: <span id="best">0</span></div>
   </div>
 
-  <div id="msg">Pressione ESPAÇO ou toque em PULAR para começar!</div>
+  <div id="msg">Carregando floresta 3D...</div>
 
-  <div id="wrap">
-    <canvas id="game" width="920" height="420"></canvas>
-    <div id="choice">
+  <div id="stage">
+    <div id="start" class="overlay show">
+      <h2>🌲 Bem-vindo à Floresta!</h2>
+      <p>Estilo Pitfall! Desvie de <b>🪵 árvores caídas</b> e <b>🕳️ buracos com jacarés</b>.<br>
+      Na <b>bifurcação</b> escolha entre 2 caminhos diferentes!<br>
+      ← → trocam de trilha • ↑ / Espaço pula</p>
+      <div class="row">
+        <button id="btn-start" class="big">▶️ Começar aventura</button>
+      </div>
+    </div>
+    <div id="choice" class="overlay">
       <h2>⚠️ Bifurcação! Escolha seu caminho:</h2>
       <p>Dois caminhos diferentes na floresta...</p>
       <div class="row">
@@ -78,21 +91,30 @@
         <button id="btn-sombrio" class="big" style="background:#a855f7;color:white">🌑 Caminho Sombrio<br><small>difícil • ponto x2</small></button>
       </div>
     </div>
+    <div id="over" class="overlay">
+      <h2>💀 Fim de jogo!</h2>
+      <p id="over-text">Pontos: 0</p>
+      <div class="row">
+        <button id="btn-again" class="big">🔄 Jogar de novo</button>
+      </div>
+    </div>
   </div>
 
   <div id="controls">
-    <button id="btn-jump" class="big">⬆️ PULAR (Espaço)</button>
+    <button id="btn-left" class="big">⬅️</button>
+    <button id="btn-jump" class="big">⬆️ PULAR</button>
+    <button id="btn-right" class="big">➡️</button>
     <button id="btn-pause" class="secondary">⏸️ Pausar</button>
     <button id="btn-restart" class="secondary">🔄 Recomeçar</button>
   </div>
 
   <div id="legend">
-    <div><b>Como jogar:</b> ESPAÇO / ↑ / W ou botão PULAR para pular. Toque na tela também pula.</div>
-    <div style="margin-top:6px"><b>Obstáculos:</b></div>
-    <div>🪵 <b>Árvore caída</b> — tronco no chão, pule por cima!</div>
-    <div>🕳️ <b>Buraco</b> — falha no chão, pule para não cair!</div>
-    <div>🍎 Frutas dão pontos. 🔥 Bater tira 1 ❤️.</div>
-    <div style="margin-top:6px"><b>Dois caminhos:</b> 🌸 Flores (fácil) x 🌑 Sombrio (rápido, mais obstáculos, pontos dobrados).</div>
+    <div><b>Como jogar (terceira pessoa):</b> você corre para dentro da floresta. Use <b>← →</b> (ou A/D, ou arrastar) para trocar de trilha, <b>↑ / Espaço / W</b> (ou botão PULAR) para pular.</div>
+    <div style="margin-top:6px"><b>Obstáculos (Pitfall!):</b></div>
+    <div>🪵 <b>Árvore caída</b> — tronco atravessado na trilha, pule por cima!</div>
+    <div>🕳️ <b>Buraco com jacaré</b> — poço na trilha, pule ou desvie de trilha!</div>
+    <div>💰 <b>Tesouro Pitfall</b> — ouro e diamantes dão pontos extras.</div>
+    <div style="margin-top:6px"><b>Dois caminhos:</b> 🌸 Flores (fácil) x 🌑 Sombrio (rápido, mais obstáculos, pontos dobrados). Biblioteca 3D: Three.js.</div>
   </div>
 
   <footer>
@@ -102,321 +124,383 @@
 
 <script>
 (() => {
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  const groundY = H - 70;
-
   const el = id => document.getElementById(id);
   const msg = t => { el("msg").textContent = t; };
 
-  let score = 0, lives = 3, dist = 0;
-  let best = +(localStorage.getItem("floresta_best") || 0);
+  if (typeof THREE === "undefined") {
+    msg("❌ Não foi possível carregar a biblioteca 3D (Three.js). Verifique sua internet e recarregue.");
+    return;
+  }
+
+  // ---------- Config 16:9 ----------
+  const VW = 1280, VH = 720; // 16:9
+  const stage = el("stage");
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
+  scene.fog = new THREE.Fog(0x87ceeb, 25, 85);
+
+  const camera = new THREE.PerspectiveCamera(60, VW / VH, 0.1, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(VW, VH, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x1a4d2e, 0.95));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(6, 12, 6);
+  scene.add(sun);
+
+  // ---------- Mundo ----------
+  const LANES = [-2.3, 0, 2.3];
+  const THEMES = {
+    flores:  { sky: 0x87ceeb, fog: 0x9fd8a8, ground: 0x3f9e4d, trail: 0x8a6a3b, tree: 0x1f7a33, mult: 1, label: "Flores 🌸" },
+    sombrio: { sky: 0x1a1033, fog: 0x2a1a4d, ground: 0x2b2b33, trail: 0x4a3b2a, tree: 0x14351f, mult: 2, label: "Sombrio 🌑 x2" }
+  };
+
+  const groundMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.ground });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(36, 220), groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, 0, -80);
+  scene.add(ground);
+
+  const trailMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.trail });
+  const trail = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 220), trailMat);
+  trail.rotation.x = -Math.PI / 2;
+  trail.position.set(0, 0.01, -80);
+  scene.add(trail);
+
+  // Árvores laterais (floresta)
+  const trees = [];
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x6b4423 });
+  const leafMat = new THREE.MeshLambertMaterial({ color: THEMES.flores.tree });
+  function makeTree(x, z, s) {
+    const g = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22*s, 0.3*s, 1.6*s, 7), trunkMat);
+    trunk.position.y = 0.8*s;
+    g.add(trunk);
+    for (let i = 0; i < 3; i++) {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry((1.3-i*0.25)*s, 1.2*s, 8), leafMat);
+      cone.position.y = (1.7 + i*0.8)*s;
+      g.add(cone);
+    }
+    g.position.set(x, 0, z);
+    scene.add(g);
+    return g;
+  }
+  for (let i = 0; i < 46; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = side * (5.2 + Math.random() * 8);
+    const z = 12 - Math.random() * 110;
+    const s = 0.8 + Math.random() * 0.9;
+    trees.push(makeTree(x, z, s));
+  }
+
+  // ---------- Jogador (terceira pessoa) ----------
+  const player = new THREE.Group();
+  const skin = new THREE.MeshLambertMaterial({ color: 0xf2c79b });
+  const shirt = new THREE.MeshLambertMaterial({ color: 0xdc2626 });
+  const pants = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+  const hatM = new THREE.MeshLambertMaterial({ color: 0x92400e });
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.7, 0.36), shirt);
+  torso.position.y = 1.15; player.add(torso);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), skin);
+  head.position.y = 1.75; player.add(head);
+  const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.22, 10), hatM);
+  hatTop.position.y = 2.05; player.add(hatTop);
+  const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 10), hatM);
+  hatBrim.position.y = 1.95; player.add(hatBrim);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.7, 0.24), pants);
+  const legR = legL.clone();
+  legL.position.set(-0.16, 0.45, 0); legR.position.set(0.16, 0.45, 0);
+  player.add(legL, legR);
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.6, 0.2), shirt);
+  const armR = armL.clone();
+  armL.position.set(-0.42, 1.15, 0); armR.position.set(0.42, 1.15, 0);
+  player.add(armL, armR);
+  scene.add(player);
+
+  // ---------- Obstáculos ----------
+  const obstacles = []; // {mesh, kind, laneX, z, hit}
+  const logMat = new THREE.MeshLambertMaterial({ color: 0x7c4a21 });
+  const logDark = new THREE.MeshLambertMaterial({ color: 0x4a2c12 });
+  const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const rimMat = new THREE.MeshLambertMaterial({ color: 0x5b3a1e });
+  const goldMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24, emissive: 0x92600a });
+  const gemMat = new THREE.MeshLambertMaterial({ color: 0x22d3ee, emissive: 0x0e7490 });
+
+  function spawnLog(laneX, z) {
+    const g = new THREE.Group();
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 2.6, 10), logMat);
+    log.rotation.z = Math.PI / 2;
+    log.position.y = 0.36;
+    g.add(log);
+    for (let i = -1; i <= 1; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.05, 6, 12), logDark);
+      ring.rotation.y = Math.PI / 2;
+      ring.position.set(i * 0.8, 0.36, 0);
+      g.add(ring);
+    }
+    g.position.set(laneX, 0, z);
+    scene.add(g);
+    obstacles.push({ mesh: g, kind: "tree", laneX, z, hit: false });
+  }
+  function spawnHole(laneX, z) {
+    const g = new THREE.Group();
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 2.6), rimMat);
+    rim.position.y = 0.06; g.add(rim);
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.2), holeMat);
+    hole.rotation.x = -Math.PI / 2; hole.position.y = 0.13; g.add(hole);
+    // olhos do jacaré (Pitfall!) dentro do buraco
+    const eyeM = new THREE.MeshBasicMaterial({ color: 0x22ff66 });
+    for (const dx of [-0.3, 0.3]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), eyeM);
+      eye.position.set(dx, 0.25, 0.4); g.add(eye);
+    }
+    const teeth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.15), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    teeth.position.set(0, 0.2, 0.75); g.add(teeth);
+    g.position.set(laneX, 0, z);
+    scene.add(g);
+    obstacles.push({ mesh: g, kind: "hole", laneX, z, hit: false });
+  }
+  function spawnTreasure(laneX, z) {
+    const g = new THREE.Group();
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.35), goldMat);
+    box.position.y = 1.0; g.add(box);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.22), gemMat);
+    gem.position.y = 1.55; g.add(gem);
+    g.position.set(laneX, 0, z);
+    scene.add(g);
+    obstacles.push({ mesh: g, kind: "treasure", laneX, z, hit: false, spin: gem });
+  }
+
+  function spawnRow(z) {
+    // garante sempre 1 trilha livre: bloqueia 1 ou 2 trilhas
+    const hard = theme === "sombrio";
+    const idx = [0, 1, 2].sort(() => Math.random() - 0.5);
+    const blockCount = Math.random() < (hard ? 0.55 : 0.3) ? 2 : 1;
+    for (let i = 0; i < blockCount; i++) {
+      const lane = idx[i];
+      const r = Math.random();
+      if (r < 0.5) spawnLog(LANES[lane], z);
+      else spawnHole(LANES[lane], z);
+    }
+    // tesouro na trilha livre (Pitfall!)
+    const freeLane = idx[blockCount] !== undefined ? idx[blockCount] : idx[2];
+    if (Math.random() < 0.7) spawnTreasure(LANES[freeLane], z - 1.5);
+  }
+
+  // ---------- Estado ----------
+  let theme = "flores";
+  let score = 0, lives = 3, dist = 0, mult = 1;
+  let best = +(localStorage.getItem("floresta3d_best") || 0);
   el("best").textContent = best;
+  el("path").textContent = THEMES.flores.label;
 
-  let running = false, paused = false, gameOver = false, showingChoice = false;
-  let speed = 280;
-  let currentPath = "flores"; // flores | sombrio
-  let multiplier = 1;
-  let nextChoiceAt = 500;
+  let lane = 1, targetX = 0;
+  let py = 0, vy = 0, onGround = true, inv = 0;
+  let speed = 12;
+  let running = false, paused = false, over = false, choosing = false;
+  let spawnZ = -70, nextChoiceAt = 600, runTime = 0;
 
-  const player = { x: 130, y: groundY - 48, w: 36, h: 48, vy: 0, onGround: true, inv: 0 };
-  const GRAV = 2800, JUMP = -980;
-
-  let obstacles = []; // {kind:'tree'|'hole'|'fruit', x, w, h, y, taken}
-  let parts = []; // particulas
-  let bgTrees = [];
-  for (let i = 0; i < 14; i++) bgTrees.push({ x: Math.random()*W, s: 20+Math.random()*50, v: 0.3+Math.random()*0.5 });
-
-  let spawnT = 0;
-  let last = 0;
-
-  function beep(freq=440, dur=0.12, type="sine") {
+  function beep(f = 440, d = 0.12, type = "sine") {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       beep.ctx = beep.ctx || new AC();
       const o = beep.ctx.createOscillator(), g = beep.ctx.createGain();
       o.connect(g); g.connect(beep.ctx.destination);
-      o.frequency.value = freq; o.type = type;
+      o.frequency.value = f; o.type = type;
       g.gain.setValueAtTime(0.12, beep.ctx.currentTime);
-      o.start(); o.stop(beep.ctx.currentTime + dur);
-    } catch(e){}
+      o.start(); o.stop(beep.ctx.currentTime + d);
+    } catch (e) {}
   }
 
-  function start() {
+  function applyTheme(t) {
+    theme = t;
+    const th = THEMES[t];
+    mult = th.mult;
+    scene.background.setHex(th.sky);
+    scene.fog.color.setHex(th.fog);
+    groundMat.color.setHex(th.ground);
+    trailMat.color.setHex(th.trail);
+    leafMat.color.setHex(th.tree);
+    el("path").textContent = th.label;
+  }
+
+  function reset() {
+    for (const o of obstacles) scene.remove(o.mesh);
+    obstacles.length = 0;
     score = 0; lives = 3; dist = 0;
-    currentPath = "flores"; multiplier = 1; nextChoiceAt = 500;
-    speed = 280; obstacles = []; parts = []; spawnT = 0;
-    player.y = groundY - player.h; player.vy = 0; player.onGround = true; player.inv = 0;
-    gameOver = false; paused = false; showingChoice = false;
+    lane = 1; targetX = 0; py = 0; vy = 0; onGround = true; inv = 0;
+    speed = 12; spawnZ = -70; nextChoiceAt = 600; runTime = 0;
+    over = false; paused = false; choosing = false;
+    applyTheme("flores");
+    el("over").classList.remove("show");
     el("choice").classList.remove("show");
-    el("path").textContent = "Flores 🌸";
+    el("start").classList.remove("show");
+    el("score").textContent = "0"; el("lives").textContent = "3"; el("dist").textContent = "0";
     running = true;
-    msg("Corra! Pule 🪵 e 🕳️!");
-    beep(660);
-  }
-
-  function jump() {
-    if (!running) { start(); return; }
-    if (gameOver) { start(); return; }
-    if (paused || showingChoice) return;
-    if (player.onGround) {
-      player.vy = JUMP; player.onGround = false;
-      beep(520, 0.1);
-    }
-  }
-
-  function choosePath(p) {
-    currentPath = p;
-    multiplier = (p === "sombrio") ? 2 : 1;
-    el("path").textContent = p === "sombrio" ? "Sombrio 🌑 x2" : "Flores 🌸";
-    showingChoice = false; paused = false;
-    el("choice").classList.remove("show");
-    nextChoiceAt = score + 500;
-    msg(p === "sombrio" ? "🌑 Você entrou no Caminho Sombrio! Coragem! x2 pontos" : "🌸 Você seguiu pelas Flores! Caminho tranquilo.");
-    beep(p === "sombrio" ? 220 : 880, 0.2);
+    msg("Corra! ← → troca de trilha • ↑ pula 🪵 e 🕳️!");
   }
 
   function damage(why) {
-    if (player.inv > 0 || gameOver) return;
-    lives--; player.inv = 1.5;
-    beep(180, 0.25, "sawtooth");
-    burst(player.x+18, player.y+24, "🔥");
+    if (inv > 0 || over) return;
+    lives--; inv = 1.6;
+    beep(160, 0.25, "sawtooth");
+    el("lives").textContent = lives;
     if (lives <= 0) {
-      gameOver = true; running = false;
-      if (score > best) { best = Math.floor(score); localStorage.setItem("floresta_best", best); el("best").textContent = best; }
-      msg(`💀 Fim de jogo! ${why} Pontos: ${Math.floor(score)}. Aperte PULAR para jogar de novo!`);
+      over = true; running = false;
+      const s = Math.floor(score);
+      if (s > best) { best = s; localStorage.setItem("floresta3d_best", best); el("best").textContent = best; }
+      el("over-text").textContent = `${why} Pontos: ${s} • Distância: ${Math.floor(dist)}m`;
+      el("over").classList.add("show");
+      msg("💀 Fim de jogo!");
     } else {
-      msg(`${why} -1 ❤️! Cuidado!`);
-      // quique para sair do buraco / tronco
-      player.vy = -700; player.onGround = false;
+      msg(`${why} -1 ❤️!`);
     }
   }
 
-  function burst(x, y, emoji) {
-    parts.push({ x, y, emoji, life: 0.8 });
+  function jump() {
+    if (!running || paused || over || choosing) return;
+    if (onGround) { vy = 8.2; onGround = false; beep(520, 0.1); }
+  }
+  function goLeft() { if (!running || paused || choosing || over) return; lane = Math.max(0, lane - 1); targetX = LANES[lane]; }
+  function goRight() { if (!running || paused || choosing || over) return; lane = Math.min(2, lane + 1); targetX = LANES[lane]; }
+
+  function choose(t) {
+    applyTheme(t);
+    choosing = false; paused = false;
+    el("choice").classList.remove("show");
+    nextChoiceAt = score + 600;
+    msg(t === "sombrio" ? "🌑 Caminho Sombrio! Mais rápido, pontos x2!" : "🌸 Caminho das Flores! Tranquilo.");
+    beep(t === "sombrio" ? 220 : 880, 0.2);
   }
 
-  function spawn() {
-    // dificuldade por caminho
-    const hard = currentPath === "sombrio";
-    const r = Math.random();
-    if (r < (hard ? 0.42 : 0.36)) {
-      // árvore caída
-      obstacles.push({ kind: "tree", x: W + 20, w: 70 + Math.random()*40, h: 34 });
-    } else if (r < (hard ? 0.78 : 0.66)) {
-      // buraco
-      obstacles.push({ kind: "hole", x: W + 20, w: 70 + Math.random()*(hard?70:40) });
-    } else {
-      // fruta no ar (precisa pular para pegar)
-      obstacles.push({ kind: "fruit", x: W + 20, w: 28, h: 28, y: groundY - 90 - Math.random()*70 });
-    }
-    // às vezes fruta junto
-    if (Math.random() < 0.3) obstacles.push({ kind: "fruit", x: W + 120, w: 28, h: 28, y: groundY - 80 - Math.random()*80 });
-  }
-
-  function isOverHole(px) {
-    for (const o of obstacles) if (o.kind === "hole") {
-      if (px > o.x && px < o.x + o.w) return o;
-    }
-    return null;
-  }
-
+  // ---------- Loop ----------
+  const clock = new THREE.Clock();
   function update(dt) {
-    if (!running || paused || showingChoice || gameOver) return;
+    if (!running || paused || over || choosing) return;
+    runTime += dt;
 
-    // velocidade aumenta com o tempo + caminho
-    const base = currentPath === "sombrio" ? 360 : 260;
-    speed = base + Math.min(220, dist * 0.35);
-    dist += speed * dt / 50;
-    score += dt * 22 * multiplier;
+    const base = theme === "sombrio" ? 16 : 12;
+    speed = base + Math.min(10, dist * 0.02);
+    dist += speed * dt;
+    score += dt * 28 * mult;
 
-    // bifurcação?
     if (score >= nextChoiceAt) {
-      showingChoice = true; paused = true;
+      choosing = true; paused = true;
       el("choice").classList.add("show");
       beep(990, 0.2);
-      return;
     }
 
-    // física
-    player.vy += GRAV * dt;
-    player.y += player.vy * dt;
-    if (player.inv > 0) player.inv -= dt;
-
-    const holeUnder = isOverHole(player.x + player.w/2);
-    const floorY = groundY - player.h;
-
-    if (player.y >= floorY) {
-      if (holeUnder && player.vy >= 0) {
-        // caiu no buraco!
-        damage("🕳️ Você caiu no buraco!");
-        // teleporta para fora do buraco para continuar
-        player.x = holeUnder.x + holeUnder.w + 4;
-        if (player.x > W - 100) player.x = 130;
-      } else {
-        player.y = floorY; player.vy = 0; player.onGround = true;
-      }
-    } else {
-      player.onGround = false;
+    // jogador: trilha + pulo + corrida
+    player.position.x += (targetX - player.position.x) * Math.min(1, dt * 10);
+    if (!onGround) {
+      vy -= 24 * dt;
+      py += vy * dt;
+      if (py <= 0) { py = 0; vy = 0; onGround = true; }
     }
+    player.position.y = py;
+    const sw = Math.sin(runTime * (onGround ? 12 : 4)) * (onGround ? 0.55 : 0.25);
+    legL.rotation.x = sw; legR.rotation.x = -sw;
+    armL.rotation.x = -sw; armR.rotation.x = sw;
+    torso.rotation.x = onGround ? 0.08 : -0.1;
+    if (inv > 0) { inv -= dt; player.visible = Math.floor(Date.now() / 150) % 2 === 0; }
+    else player.visible = true;
 
-    // spawn
-    spawnT -= dt;
-    const interval = currentPath === "sombrio" ? 0.75 : 1.05;
-    if (spawnT <= 0) { spawn(); spawnT = interval + Math.random()*0.6; }
+    // camera em terceira pessoa (atrás do jogador)
+    camera.position.set(player.position.x * 0.55, 3.4 + py * 0.25, 6.8);
+    camera.lookAt(player.position.x * 0.7, 1.3, -7);
 
-    // move obstáculos
-    for (const o of obstacles) o.x -= speed * dt;
-    obstacles = obstacles.filter(o => o.x + (o.w||40) > -40);
-
-    // fundo
-    for (const t of bgTrees) {
-      t.x -= speed * t.v * dt;
-      if (t.x < -60) { t.x = W + 40; t.s = 20+Math.random()*50; }
-    }
-
-    // colisões
-    const px1 = player.x, px2 = player.x + player.w, py1 = player.y, py2 = player.y + player.h;
-    for (const o of obstacles) {
-      if (o.kind === "tree") {
-        const ox1 = o.x, ox2 = o.x + o.w, oy1 = groundY - o.h, oy2 = groundY;
-        if (px2 > ox1+6 && px1 < ox2-6 && py2 > oy1+6 && py1 < oy2) {
-          damage("🪵 Bateu na árvore caída!");
-          o.x = -100; // remove para não bater 2x
-        }
-      } else if (o.kind === "fruit" && !o.taken) {
-        const cx = o.x + 14, cy = o.y + 14;
-        if (cx > px1-6 && cx < px2+6 && cy > py1-6 && cy < py2+6) {
-          o.taken = true; o.x = -100;
-          score += 25 * multiplier; burst(cx, cy, "✨"); beep(880, 0.1);
-        }
+    // árvores reciclando
+    for (const t of trees) {
+      t.position.z += speed * dt;
+      if (t.position.z > 14) {
+        t.position.z -= 120;
+        t.position.x = (Math.random() < 0.5 ? -1 : 1) * (5.2 + Math.random() * 8);
       }
     }
 
-    // partículas
-    for (const p of parts) p.life -= dt;
-    parts = parts.filter(p => p.life > 0);
+    // spawn por distância
+    spawnZ += speed * dt;
+    const gap = theme === "sombrio" ? 16 : 22;
+    if (spawnZ > -8) { spawnRow(-72); spawnZ = -72 + (gap - 14); }
+
+    // move obstáculos + tesouro girando
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i];
+      o.z += speed * dt;
+      o.mesh.position.z = o.z;
+      if (o.kind === "treasure" && o.spin) o.spin.rotation.y += dt * 3;
+      if (o.z > 8) { scene.remove(o.mesh); obstacles.splice(i, 1); continue; }
+
+      const dx = Math.abs(o.mesh.position.x - player.position.x);
+      const dz = Math.abs(o.z - 0);
+      if (o.kind === "treasure" && !o.hit && dz < 1.0 && dx < 1.0 && py < 2.2) {
+        o.hit = true;
+        score += 30 * mult; beep(880, 0.12);
+        msg("💰 Tesouro Pitfall! +" + (30 * mult));
+        scene.remove(o.mesh); obstacles.splice(i, 1); continue;
+      }
+      if (!o.hit && dz < 0.85 && dx < 1.05) {
+        if (o.kind === "tree" && py < 0.9) { o.hit = true; damage("🪵 Bateu na árvore caída!"); }
+        if (o.kind === "hole" && py < 0.3) { o.hit = true; damage("🕳️ Caiu no buraco do jacaré! 🐊"); }
+      }
+    }
 
     el("score").textContent = Math.floor(score);
-    el("lives").textContent = lives;
     el("dist").textContent = Math.floor(dist);
+    el("lives").textContent = lives;
   }
 
-  function drawGround() {
-    // chão com falhas nos buracos
-    ctx.fillStyle = currentPath === "sombrio" ? "#1c1917" : "#3f6212";
-    // base
-    ctx.fillRect(0, groundY, W, H - groundY);
-    ctx.fillStyle = currentPath === "sombrio" ? "#44403c" : "#65a30d";
-    ctx.fillRect(0, groundY, W, 10);
-
-    // apaga onde tem buraco
-    for (const o of obstacles) if (o.kind === "hole") {
-      ctx.clearRect(o.x, groundY - 2, o.w, H - groundY + 2);
-      // borda do buraco
-      ctx.fillStyle = "#000";
-      ctx.fillRect(o.x, groundY + 8, o.w, H - groundY - 8);
-      ctx.fillStyle = "#78350f";
-      ctx.fillRect(o.x - 4, groundY, 6, 12);
-      ctx.fillRect(o.x + o.w - 2, groundY, 6, 12);
-      ctx.font = "22px serif"; ctx.fillText("🕳️", o.x + o.w/2 - 11, groundY + 34);
-      ctx.fillStyle = currentPath === "sombrio" ? "#44403c" : "#65a30d";
-    }
-  }
-
-  function draw() {
-    // céu
-    const grad = ctx.createLinearGradient(0,0,0,H);
-    if (currentPath === "sombrio") { grad.addColorStop(0,"#0f0a2e"); grad.addColorStop(1,"#1e1b4b"); }
-    else { grad.addColorStop(0,"#86efac"); grad.addColorStop(1,"#14532d"); }
-    ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
-
-    // sol/lua
-    ctx.font = "44px serif";
-    ctx.fillText(currentPath === "sombrio" ? "🌙" : "☀️", W-70, 60);
-
-    // árvores de fundo
-    ctx.font = "40px serif";
-    for (const t of bgTrees) {
-      ctx.globalAlpha = 0.55;
-      ctx.font = `${t.s}px serif`;
-      ctx.fillText(currentPath === "sombrio" ? "🌲" : "🌳", t.x, groundY - 6);
-    }
-    ctx.globalAlpha = 1;
-
-    drawGround();
-
-    // obstáculos
-    for (const o of obstacles) {
-      if (o.kind === "tree") {
-        ctx.fillStyle = "#78350f";
-        const y = groundY - o.h;
-        ctx.fillRect(o.x, y, o.w, o.h);
-        ctx.fillStyle = "#451a03";
-        for (let xx = o.x+6; xx < o.x+o.w; xx+=18) ctx.fillRect(xx, y+6, 4, o.h-12);
-        ctx.font = "30px serif";
-        ctx.fillText("🌿", o.x + 4, y + 8);
-        ctx.fillText("🪵", o.x + o.w - 34, y - 6);
-      } else if (o.kind === "fruit") {
-        ctx.font = "26px serif";
-        ctx.fillText("🍎", o.x, o.y + 22);
-      }
-    }
-
-    // jogador (pisca se invencível)
-    if (!(player.inv > 0 && Math.floor(Date.now()/150)%2===0)) {
-      ctx.font = "44px serif";
-      // corre inclinando? simples
-      ctx.fillText(player.onGround ? "🧑‍🌾" : "🦸", player.x, player.y + 42);
-    }
-
-    // partículas
-    ctx.font = "22px serif";
-    for (const p of parts) ctx.fillText(p.emoji, p.x, p.y);
-
-    if (gameOver) {
-      ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-      ctx.font = "bold 42px system-ui"; ctx.fillText("💀 Fim de jogo!", W/2, H/2 - 10);
-      ctx.font = "20px system-ui"; ctx.fillText(`Pontos: ${Math.floor(score)}  •  Toque em PULAR para recomeçar`, W/2, H/2 + 30);
-      ctx.textAlign = "left";
-    } else if (!running && !gameOver && score===0) {
-      ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-      ctx.font = "bold 30px system-ui"; ctx.fillText("🌲 Toque em PULAR para entrar na floresta!", W/2, H/2);
-      ctx.textAlign = "left";
-    }
-  }
-
-  function loop(t) {
-    const dt = Math.min(0.033, (t - last)/1000 || 0.016);
-    last = t;
-    update(dt); draw();
+  function loop() {
     requestAnimationFrame(loop);
+    const dt = Math.min(0.05, clock.getDelta());
+    // idle: câmera suave antes de começar
+    if (!running && !over) {
+      runTime += dt;
+      camera.position.set(Math.sin(runTime * 0.3) * 2, 3.4, 6.8);
+      camera.lookAt(0, 1.3, -7);
+      for (const t of trees) { t.position.z += 3 * dt; if (t.position.z > 14) t.position.z -= 120; }
+    } else {
+      update(dt);
+    }
+    renderer.render(scene, camera);
   }
+  loop();
+  msg("Aperte Começar! Biblioteca 3D Three.js carregada ✅");
 
-  // eventos
+  // ---------- Entradas ----------
   document.addEventListener("keydown", e => {
-    if (["Space","ArrowUp","KeyW"].includes(e.code)) { e.preventDefault(); jump(); }
-    if (e.code === "KeyP") { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); }
+    if (["ArrowLeft", "KeyA"].includes(e.code)) { e.preventDefault(); goLeft(); }
+    else if (["ArrowRight", "KeyD"].includes(e.code)) { e.preventDefault(); goRight(); }
+    else if (["Space", "ArrowUp", "KeyW"].includes(e.code)) { e.preventDefault(); jump(); }
+    else if (e.code === "KeyP") { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); }
+    else if (e.code === "Enter" && !running) reset();
   });
-  canvas.addEventListener("pointerdown", jump);
-  el("btn-jump").onclick = jump;
-  el("btn-restart").onclick = start;
+
+  // swipe no canvas
+  let tx = 0, ty = 0;
+  const cv = renderer.domElement;
+  cv.addEventListener("touchstart", e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+  cv.addEventListener("touchend", e => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) { jump(); return; }
+    if (Math.abs(dx) > Math.abs(dy)) { dx > 0 ? goRight() : goLeft(); }
+    else if (dy < 0) jump();
+  });
+
+  el("btn-start").onclick = () => { reset(); beep(660); };
+  el("btn-again").onclick = reset;
+  el("btn-restart").onclick = reset;
+  el("btn-jump").onclick = () => { if (!running && !over) reset(); else jump(); };
+  el("btn-left").onclick = goLeft;
+  el("btn-right").onclick = goRight;
   el("btn-pause").onclick = () => { paused = !paused; msg(paused ? "⏸️ Pausado" : "▶️ Continuando!"); };
-  el("btn-flores").onclick = () => choosePath("flores");
-  el("btn-sombrio").onclick = () => choosePath("sombrio");
-
-  // toque duplo na tela também pula (mobile)
-  let lastTouch = 0;
-  document.addEventListener("touchstart", e => {
-    const now = Date.now();
-    if (now - lastTouch < 300) e.preventDefault();
-    lastTouch = now;
-  }, {passive:false});
-
-  requestAnimationFrame(loop);
+  el("btn-flores").onclick = () => choose("flores");
+  el("btn-sombrio").onclick = () => choose("sombrio");
 })();
 </script>
 </body>

@@ -6,21 +6,24 @@ Site publicado via GitHub Pages: https://larandreluizinfo.github.io/aba261006/
 
 Projeto criado por Ana Elisa 5ºB, Anabella 5ºB e Benicio 4ºA.
 
-## 🌲 Aventura na Floresta
+## 🌲 Aventura na Floresta 3D — inspirado em Pitfall!
 
-Jogo de aventura na floresta no navegador (sem instalação).
+Jogo 3D em terceira pessoa, proporção 16:9, no navegador (sem instalação).
+Biblioteca 3D: Three.js via CDN.
 
 **Como jogar:**
-- ESPAÇO / seta ↑ / W ou botão PULAR (toque na tela também pula)
-- Pule os obstáculos e colete 🍎 para pontos
-- A cada 500 pontos aparece a bifurcação com dois caminhos diferentes
+- ← → (ou A/D) trocam de trilha, ↑ / Espaço / W pula
+- No celular: botões ⬅️ ➡️ ⬆️ ou arrastar na tela
+- Câmera atrás do explorador, corra para dentro da floresta
 
 **Obstáculos:**
-- 🪵 Árvore caída — tronco no chão, pule por cima
-- 🕳️ Buraco — falha no chão, pule para não cair
+- 🪵 Árvore caída — tronco atravessado na trilha, pule por cima
+- 🕳️ Buraco com jacaré — poço estilo Pitfall!, pule ou desvie de trilha
+- 💰 Tesouro Pitfall — ouro e diamantes dão pontos extras
 
 **Dois caminhos:**
-- 🌸 Caminho das Flores — fácil, obstáculos espaçados, ponto x1
+- 🌸 Caminho das Flores — fácil, ponto x1
 - 🌑 Caminho Sombrio — difícil, mais rápido e mais obstáculos, ponto x2
+- A bifurcação aparece durante a corrida, escolha seu caminho!
 
 Você tem 3 ❤️. Bater tira 1 ❤️.
