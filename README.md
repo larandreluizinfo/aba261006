@@ -26,6 +26,7 @@ Biblioteca 3D: Three.js via CDN com visual hiper-realista.
 - 🪵 Árvore caída — tronco com musgo atravessado na trilha, pule por cima
 - 🕳️ Buraco com jacaré — poço estilo Pitfall! com água, pule ou desvie de trilha
 - 💰 Tesouro Pitfall — baú com ouro e diamantes dão pontos extras
+- 🦏 Rinoceronte seguindo o personagem — ele corre atrás de você (trote, poeira e bufadas) e chega mais perto a cada erro! No fim, ele alcança você!
 
 **Dois caminhos:**
 - 🌸 Caminho das Flores — fácil, dia claro, ponto x1

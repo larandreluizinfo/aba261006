@@ -80,6 +80,7 @@
     <div class="badge">📏 Distância: <span id="dist">0</span>m</div>
     <div class="badge">🛤️ Caminho: <span id="path">Flores 🌸</span></div>
     <div class="badge">🏆 Recorde: <span id="best">0</span></div>
+    <div class="badge">🦏 Fuja do rinoceronte!</div>
   </div>
 
   <div id="msg">Carregando floresta hiper-realista...</div>
@@ -90,6 +91,7 @@
     <div id="start" class="overlay show">
       <h2>🌲 Floresta Hiper-Realista</h2>
       <p>Estilo Pitfall! com gráficos realistas: sol com sombras, neblina, folhas caindo, poeira, água e jacaré animado.<br>
+      🦏 Um <b>rinoceronte está seguindo o personagem</b> — se você bater, ele se aproxima! Fuja!<br>
       Desvie de <b>🪵 árvores caídas</b> e <b>🕳️ buracos</b>. Na <b>bifurcação</b> escolha 1 dos 2 caminhos!<br>
       ← → trocam de trilha • ↑ / Espaço pula</p>
       <div class="row"><button id="btn-start" class="big">▶️ Entrar na floresta</button></div>
@@ -119,7 +121,7 @@
 
   <div id="legend">
     <div><b>Terceira pessoa hiper-realista:</b> câmera atrás do explorador, sombras em tempo real, texturas procedurais (grama, terra, casca), céu com sol e nuvens, montanhas ao fundo, folhas e poeira.</div>
-    <div style="margin-top:6px"><b>Pitfall!:</b> 🪵 tronco com musgo • 🕳️ poço com água e jacaré animado • 💰 baú com ouro e gema.</div>
+    <div style="margin-top:6px"><b>Pitfall!:</b> 🪵 tronco com musgo • 🕳️ poço com água e jacaré animado • 💰 baú com ouro e gema • 🦏 rinoceronte perseguindo (chega mais perto a cada erro!).</div>
     <div><b>Dois caminhos:</b> 🌸 Flores (dia) x 🌑 Sombrio (noite/neblina, vaga-lumes, x2 pontos). Biblioteca 3D: Three.js.</div>
   </div>
 
@@ -350,6 +352,53 @@
   const roll = new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.46,8), new THREE.MeshStandardMaterial({color:0x3f6212})); roll.rotation.z=Math.PI/2; roll.position.set(0,1.36,.3); player.add(roll);
   scene.add(player);
 
+  // ---------- Rinoceronte perseguindo (visão em terceira pessoa) ----------
+  // Ele corre atrás do explorador (entre o jogador e a câmera), como em Temple Run.
+  const rhino = new THREE.Group();
+  const rhinoSkin = new THREE.MeshStandardMaterial({ color: 0x6f6e6a, roughness: .95, flatShading: true });
+  const rhinoDark = new THREE.MeshStandardMaterial({ color: 0x54534f, roughness: 1, flatShading: true });
+  const hornM = new THREE.MeshStandardMaterial({ color: 0xe8e0cc, roughness: .5 });
+  const rhinoBody = new THREE.Mesh(new THREE.SphereGeometry(.85, 12, 10), rhinoSkin);
+  rhinoBody.scale.set(1, 1.05, 1.55); rhinoBody.position.y = 1.05; rhinoBody.castShadow = true; rhino.add(rhinoBody);
+  for (const z of [-.5, .35]) {
+    const fold = new THREE.Mesh(new THREE.TorusGeometry(.82, .09, 8, 16), rhinoDark);
+    fold.position.set(0, 1.05, z); rhino.add(fold);
+  }
+  const rhinoHead = new THREE.Group();
+  rhinoHead.position.set(0, 1.15, -1.25);
+  const skull = new THREE.Mesh(new THREE.BoxGeometry(.68, .62, .85), rhinoSkin); skull.castShadow = true; rhinoHead.add(skull);
+  const snout = new THREE.Mesh(new THREE.BoxGeometry(.46, .4, .5), rhinoDark); snout.position.set(0, -.12, -.55); rhinoHead.add(snout);
+  for (const dx of [-.13, .13]) {
+    const nos = new THREE.Mesh(new THREE.SphereGeometry(.055, 6, 6), new THREE.MeshBasicMaterial({ color: 0x1c1917 }));
+    nos.position.set(dx, -.08, -.81); rhinoHead.add(nos);
+  }
+  const horn1 = new THREE.Mesh(new THREE.ConeGeometry(.13, .62, 10), hornM);
+  horn1.position.set(0, .12, -.75); horn1.rotation.x = -.5; horn1.castShadow = true; rhinoHead.add(horn1);
+  const horn2 = new THREE.Mesh(new THREE.ConeGeometry(.09, .32, 8), hornM);
+  horn2.position.set(0, .32, -.35); horn2.rotation.x = -.4; rhinoHead.add(horn2);
+  for (const dx of [-.3, .3]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 8), new THREE.MeshBasicMaterial({ color: 0x7f1d1d }));
+    eye.position.set(dx, .14, -.3); rhinoHead.add(eye);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(.11, .3, 6), rhinoSkin);
+    ear.position.set(dx * 1.4, .45, .2); ear.rotation.z = -dx * 1.2; rhinoHead.add(ear);
+  }
+  rhino.add(rhinoHead);
+  const rhinoLegs = [];
+  for (const [lx, lz] of [[-.42, -.65], [.42, -.65], [-.42, .7], [.42, .7]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.17, .2, .95, 8), rhinoDark);
+    leg.position.set(lx, .48, lz); leg.castShadow = true; rhino.add(leg); rhinoLegs.push(leg);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(.21, .23, .18, 8), new THREE.MeshStandardMaterial({ color: 0x3f3f3a, roughness: 1 }));
+    foot.position.set(lx, .09, lz); rhino.add(foot);
+  }
+  const rhinoTail = new THREE.Mesh(new THREE.CylinderGeometry(.045, .03, .9, 6), rhinoDark);
+  rhinoTail.position.set(0, 1.2, 1.35); rhinoTail.rotation.x = .5; rhino.add(rhinoTail);
+  const tailTuft = new THREE.Mesh(new THREE.SphereGeometry(.09, 6, 6), new THREE.MeshBasicMaterial({ color: 0x1c1917 }));
+  tailTuft.position.set(0, .78, 1.55); rhino.add(tailTuft);
+  rhino.scale.setScalar(1.15);
+  rhino.position.set(0, 0, 2.8);
+  scene.add(rhino);
+  let rhinoX = 0, rhinoLunge = 0;
+
   // ---------- Obstáculos Pitfall! realistas ----------
   const LANES = [-2.3, 0, 2.3];
   const obstacles = [];
@@ -443,7 +492,7 @@
   let best=+(localStorage.getItem("floresta3d_best")||0); el("best").textContent=best; el("path").textContent=THEMES.flores.label;
   let lane=1, targetX=0, py=0, vy=0, onGround=true, inv=0;
   let speed=12, running=false, paused=false, over=false, choosing=false;
-  let spawnAcc=0, nextChoiceAt=600, runTime=0, shake=0;
+  let spawnAcc=0, nextChoiceAt=600, runTime=0, shake=0, snortT=0;
 
   function beep(f=440,d=.12,t="sine"){ try{ const AC=window.AudioContext||window.webkitAudioContext; beep.ctx=beep.ctx||new AC();
     const o=beep.ctx.createOscillator(),g=beep.ctx.createGain(); o.connect(g);g.connect(beep.ctx.destination);
@@ -464,15 +513,17 @@
   function reset(){
     for(const o of obstacles) scene.remove(o.mesh); obstacles.length=0;
     score=0;lives=3;dist=0;lane=1;targetX=0;py=0;vy=0;onGround=true;inv=0;
-    speed=12;spawnAcc=0;nextChoiceAt=600;runTime=0;shake=0;
+    speed=12;spawnAcc=0;nextChoiceAt=600;runTime=0;shake=0;snortT=0;
+    rhinoX=0; rhinoLunge=0; rhino.position.set(0,0,2.8); rhino.visible=true;
     over=false;paused=false;choosing=false;applyTheme("flores");
     el("over").classList.remove("show");el("choice").classList.remove("show");el("start").classList.remove("show");
     el("score").textContent="0";el("lives").textContent="3";el("dist").textContent="0";
-    running=true; msg("Corra! ← → troca de trilha • ↑ pula 🪵 e 🕳️!");
+    running=true; msg("Corra! 🦏 O rinoceronte está atrás de você! ← → troca de trilha • ↑ pula!");
   }
   function damage(why){
     if(inv>0||over) return;
-    lives--; inv=1.6; shake=.5; beep(150,.28,"sawtooth");
+    lives--; inv=1.6; shake=.5; rhinoLunge=1; beep(110,.35,"sawtooth");
+    setTimeout(()=>beep(90,.3,"square"),120); // bufada do rinoceronte se aproximando
     el("lives").textContent=lives; puff(player.position.x,1,0);
     if(lives<=0){ over=true; running=false;
       const s=Math.floor(score);
@@ -510,6 +561,26 @@
     torso.position.y = 1.02 + (onGround?Math.abs(Math.sin(runTime*13))*.05:0);
     head.position.y = 1.6 + (onGround?Math.abs(Math.sin(runTime*13))*.04:0);
     if(inv>0){ inv-=dt; player.visible=Math.floor(Date.now()/140)%2===0; } else player.visible=true;
+
+    // ---------- Rinoceronte perseguindo ----------
+    // Quanto menos vidas / após dano, mais perto ele chega. No game over ele alcança o jogador.
+    if(rhinoLunge>0) rhinoLunge = Math.max(0, rhinoLunge - dt*.45);
+    let gapTarget = 2.8 - (3-lives)*.35 - rhinoLunge*.9;
+    if(over) gapTarget = .7;
+    gapTarget = Math.max(.7, gapTarget);
+    rhinoX += (player.position.x - rhinoX) * Math.min(1, dt*4);
+    rhino.position.x = rhinoX + Math.sin(runTime*1.7)*.08;
+    rhino.position.z += (gapTarget - rhino.position.z) * Math.min(1, dt*3);
+    rhino.position.y = Math.abs(Math.sin(runTime*11))*.12;
+    rhinoHead.position.y = 1.15 + Math.sin(runTime*11)*.07;
+    rhinoHead.rotation.x = Math.sin(runTime*5.5)*.08;
+    for(let li=0; li<rhinoLegs.length; li++){
+      rhinoLegs[li].rotation.x = Math.sin(runTime*11 + (li%2)*Math.PI + (li>1?Math.PI*.5:0))*.75;
+    }
+    rhinoTail.rotation.z = Math.sin(runTime*6)*.4;
+    if(Math.random()<dt*6) puff(rhino.position.x+R(-.5,.5),.15,rhino.position.z+R(-.5,.5));
+    snortT -= dt;
+    if(snortT<=0){ snortT=R(4,8); beep(75,.25,"sawtooth"); puff(rhino.position.x,.9,rhino.position.z-1.4); }
 
     // câmera terceira pessoa com leve balanço + shake
     if(shake>0) shake-=dt;
@@ -583,6 +654,11 @@
     const dt=Math.min(.05,clock.getDelta());
     if(!running&&!over){ runTime+=dt;
       camera.position.set(Math.sin(runTime*.25)*2.4,3.1,6.4); camera.lookAt(0,1.3,-8);
+      // rinoceronte parado bufando no menu
+      rhino.position.x = Math.sin(runTime*.6)*.4;
+      rhino.position.z = 2.8 + Math.sin(runTime*.8)*.15;
+      rhinoHead.rotation.x = Math.sin(runTime*2)*.1;
+      rhinoTail.rotation.z = Math.sin(runTime*4)*.5;
       for(const t of trees){ t.position.z+=2.5*dt; if(t.position.z>16) t.position.z-=130; }
       for(const l of leaves){ l.rotation.x+=dt; l.position.y-=dt*.4; if(l.position.y<0) l.position.y=8; }
       for(const c of clouds){ c.position.x+=c.userData.v*dt; if(c.position.x>150) c.position.x=-150; }
